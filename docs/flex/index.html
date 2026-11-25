@@ -67,6 +67,15 @@
   .note { font-size: 14px; color: var(--muted); margin-top: 10px; }
   .error { color: var(--red); font-size: 14px; margin-top: 8px; min-height: 1em; }
   .thanks { color: var(--green); font-weight: 600; }
+  .offers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 520px) { .offers { grid-template-columns: 1fr; } }
+  .offer { border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .offer.best { border-color: var(--green); background: rgba(63, 185, 80, 0.07); }
+  .offer-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 700; }
+  .price { color: var(--green); font-size: 22px; font-weight: 800; }
+  .offer.free .price { color: var(--text); }
+  .offer-desc { color: var(--muted); font-size: 14px; flex: 1; margin: 0; }
+  .offer .btn { justify-content: center; width: 100%; }
   code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; }
   footer { margin-top: 40px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
   [hidden] { display: none !important; }
@@ -119,9 +128,17 @@
       <div class="card">
         <div class="step" data-i18n="downloadStep"></div>
         <p class="thanks" id="thanks" hidden data-i18n="thanks"></p>
-        <div class="row">
-          <button class="btn primary" id="download" disabled></button>
-          <button class="btn ghost" id="pay" hidden></button>
+        <div class="offers">
+          <div class="offer free" id="freeOffer">
+            <div class="offer-head"><span id="freeTitle"></span><span class="price" id="freePrice"></span></div>
+            <p class="offer-desc" id="freeDesc"></p>
+            <button class="btn ghost" id="download" disabled></button>
+          </div>
+          <div class="offer best" id="payOffer">
+            <div class="offer-head"><span data-i18n="hdTitle"></span><span class="price" id="hdPrice"></span></div>
+            <p class="offer-desc" data-i18n="hdDesc"></p>
+            <button class="btn primary" id="pay" disabled></button>
+          </div>
         </div>
         <p class="note" id="downloadNote"></p>
       </div>
@@ -159,8 +176,16 @@ const TEXT = {
     fileError: 'Could not read this image. Try a JPG or PNG.',
     privacy: '🔒 The frame is drawn in your browser. Nothing is uploaded anywhere.',
     downloadStep: '3. Download',
-    downloadFree: 'Download (free, with watermark)',
+    downloadFree: 'Download',
     downloadHd: 'Download HD',
+    freeTitle: 'Free',
+    freePrice: '€0',
+    freeDesc: 'With a small "token‑maxxing" signature at the end of the ring.',
+    hdTitle: 'HD, no signature',
+    hdDesc: 'A clean ring, 1024 x 1024 px. Secure payment with Stripe, then straight back here to download.',
+    payButton: (price) => `Pay ${price}`,
+    unlockedTitle: 'HD, no signature',
+    unlockedDesc: 'Paid. Your ring is clean, download it as many times as you like.',
     removeWatermark: (price) => `Remove the watermark (${price})`,
     needPhoto: 'Add a photo first.',
     needScore: 'Load your score from the mod to download your frame.',
@@ -193,8 +218,16 @@ const TEXT = {
     fileError: 'Impossible de lire cette image. Essaie un JPG ou un PNG.',
     privacy: '🔒 Le cadre est dessiné dans ton navigateur. Rien n\'est envoyé nulle part.',
     downloadStep: '3. Télécharger',
-    downloadFree: 'Télécharger (gratuit, avec filigrane)',
+    downloadFree: 'Télécharger',
     downloadHd: 'Télécharger en HD',
+    freeTitle: 'Gratuit',
+    freePrice: '0 €',
+    freeDesc: "Avec une petite signature « token‑maxxing » au bout de l'anneau.",
+    hdTitle: 'HD sans signature',
+    hdDesc: 'Anneau propre, 1024 x 1024 px. Paiement sécurisé par Stripe, puis retour ici pour télécharger.',
+    payButton: (price) => `Payer ${price}`,
+    unlockedTitle: 'HD sans signature',
+    unlockedDesc: 'Payé. Ton anneau est propre, télécharge-le autant de fois que tu veux.',
     removeWatermark: (price) => `Retirer le filigrane (${price})`,
     needPhoto: 'Ajoute d\'abord une photo.',
     needScore: 'Charge ton score depuis le mod pour télécharger ton cadre.',
@@ -470,15 +503,23 @@ function renderText() {
     el('scoreMeta').textContent = s.roi !== null ? `${t().roiLabel}, ${tokenCount(s.tokens)} ${t().tokensLabel}, ${period}` : `${t().tokensLabel}, ${period}`
   }
 
+  // Two offers side by side, always shown: free with a signature, HD without. Paid: one HD download.
+  const isReady = !!state.photo && !!state.score
   const download = el('download')
   const pay = el('pay')
+  el('freeTitle').textContent = state.isUnlocked ? t().unlockedTitle : t().freeTitle
+  el('freePrice').textContent = state.isUnlocked ? '' : t().freePrice
+  el('freeDesc').textContent = state.isUnlocked ? t().unlockedDesc : t().freeDesc
+  el('freeOffer').classList.toggle('best', state.isUnlocked)
   download.textContent = state.isUnlocked ? t().downloadHd : t().downloadFree
-  download.disabled = !state.photo || !state.score
-  pay.hidden = !PAYMENT_LINK || state.isUnlocked || !state.score
-  pay.textContent = t().removeWatermark(PRICE[state.lang])
-  pay.disabled = !state.photo
+  download.className = state.isUnlocked ? 'btn primary' : 'btn ghost'
+  download.disabled = !isReady
+  el('payOffer').hidden = !PAYMENT_LINK || state.isUnlocked
+  el('hdPrice').textContent = PRICE[state.lang]
+  pay.textContent = t().payButton(PRICE[state.lang])
+  pay.disabled = !isReady
   el('thanks').hidden = !state.isUnlocked
-  el('downloadNote').textContent = !state.score ? t().needScore : !state.photo ? t().needPhoto : state.isUnlocked ? '' : PAYMENT_LINK ? `${t().freeNote} ${t().paidNote}` : t().freeNote
+  el('downloadNote').textContent = !state.score ? t().needScore : !state.photo ? t().needPhoto : ''
   renderStyles()
 }
 
