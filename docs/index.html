@@ -3,15 +3,145 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>token-maxxing</title>
+<title>token-maxxing: Claude Code token usage and API cost tracker</title>
+<meta name="description" content="token-maxxing is a free, open source Claude Code mod that shows your token usage per model, what it would have cost on the Anthropic API (BYOK), and how many times your Claude subscription paid for itself.">
+<link rel="canonical" href="https://jck-sabords.github.io/token-maxxing/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jck-sabords.github.io/token-maxxing/">
 <meta property="og:title" content="token-maxxing: Looksmaxxing is over">
-<meta property="og:description" content="A Claude Code mod that shows your tokens per model, the API bill you dodged, and your subscription ROI.">
+<meta property="og:description" content="See your Claude Code tokens per model, the API bill you dodged, and your subscription ROI. Free and open source.">
 <meta property="og:image" content="https://jck-sabords.github.io/token-maxxing/og.png">
-<meta http-equiv="refresh" content="0; url=./flex/">
-<style>body { background: #0d1117; color: #e6edf3; font-family: system-ui, sans-serif; padding: 24px; } a { color: #3fb950; }</style>
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="icon.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "token-maxxing",
+  "alternateName": "token-maxxing Claude Code mod",
+  "description": "A Claude Code mod (plugin) that shows token usage per model, this month and all time, the API-equivalent cost (BYOK) at Anthropic's public prices, and the return on a Claude subscription.",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Windows, macOS, Linux",
+  "softwareVersion": "0.6.0",
+  "license": "https://opensource.org/licenses/MIT",
+  "url": "https://jck-sabords.github.io/token-maxxing/",
+  "downloadUrl": "https://github.com/JCK-Sabords/token-maxxing",
+  "codeRepository": "https://github.com/JCK-Sabords/token-maxxing",
+  "image": "https://jck-sabords.github.io/token-maxxing/og.png",
+  "author": { "@type": "Person", "name": "JCK", "url": "https://github.com/JCK-Sabords" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "How can I see my Claude Code token usage per model?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Install the free token-maxxing mod with /plugin install token-maxxing --marketplace JCK-Sabords/token-maxxing, then type /tokens. A pane shows your tokens per model, this month and all time." } },
+    { "@type": "Question", "name": "How much would my Claude Code usage cost on the API?",
+      "acceptedAnswer": { "@type": "Answer", "text": "token-maxxing prices every reply in your local Claude Code transcripts at Anthropic's public API rates, cache writes and reads included, and shows the total per model, this month and all time." } },
+    { "@type": "Question", "name": "Is my Claude subscription worth it compared to the API?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Set your plan price in token-maxxing. It divides your API-equivalent cost by what you paid and shows the ratio: green above x1 when the subscription pays for itself, red below." } },
+    { "@type": "Question", "name": "Does token-maxxing send my data anywhere?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. It only reads Claude Code transcripts already on your disk and does the math locally. Nothing is sent over the network." } },
+    { "@type": "Question", "name": "Does it work in the Claude desktop app?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. token-maxxing works in the Claude Code CLI, the Code tab of the Claude desktop app and the VS Code extension. It needs Claude Code v2.1.287 or later (v2.1.286 in the desktop app)." } }
+  ]
+}
+</script>
+<style>
+  :root { color-scheme: dark; --bg: #0d1117; --panel: #161b22; --line: #30363d; --text: #e6edf3; --muted: #8b949e; --green: #3fb950; --red: #ff7b72; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(1200px 600px at 85% 0%, rgba(63, 185, 80, 0.12), transparent 60%), var(--bg); color: var(--text); font: 17px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  a { color: var(--green); }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px 64px; }
+  nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .brand { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--text); text-decoration: none; font-weight: 700; }
+  nav .links a { color: var(--muted); text-decoration: none; margin-left: 16px; font-size: 15px; }
+  h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.08; letter-spacing: -0.02em; margin: 48px 0 12px; }
+  h1 em { font-style: normal; color: var(--green); }
+  .lead { color: var(--muted); font-size: 19px; max-width: 680px; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 28px 0 8px; }
+  .btn { display: inline-flex; align-items: center; padding: 12px 18px; border-radius: 10px; font-weight: 700; text-decoration: none; }
+  .btn.primary { background: var(--green); color: #04130a; }
+  .btn.ghost { border: 1px solid var(--line); color: var(--text); }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .receipts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 40px 0; }
+  @media (max-width: 680px) { .receipts { grid-template-columns: repeat(2, 1fr); } }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .stat b { display: block; font-size: 28px; }
+  .stat span { color: var(--muted); font-size: 14px; }
+  .stat.red b { color: var(--red); } .stat.green b { color: var(--green); }
+  h2 { font-size: 28px; margin: 56px 0 12px; }
+  ul.features { padding-left: 20px; }
+  ul.features li { margin: 6px 0; }
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin: 10px 0; }
+  summary { cursor: pointer; font-weight: 700; }
+  details p { color: var(--muted); margin: 10px 0 0; }
+  footer { margin-top: 64px; border-top: 1px solid var(--line); padding-top: 16px; color: var(--muted); font-size: 14px; }
+</style>
 </head>
 <body>
-<p><a href="./flex/">Flex your ROI</a></p>
-<p><a href="https://github.com/JCK-Sabords/token-maxxing">token-maxxing on GitHub</a></p>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="./">token-maxxing</a>
+    <div class="links"><a href="#install">Install</a><a href="#faq">FAQ</a><a href="./flex/">Flex</a><a href="https://github.com/JCK-Sabords/token-maxxing">GitHub</a></div>
+  </nav>
+
+  <header>
+    <h1>Looksmaxxing is over.<br>Welcome to <em>token-maxxing</em>.</h1>
+    <p class="lead">token-maxxing is a free, open source Claude Code mod that shows your token usage per model, what it would have cost on the Anthropic API, and how many times your Claude subscription paid for itself. To the cent. Cache included. No cap.</p>
+    <div class="cta">
+      <a class="btn primary" href="#install">Install in 10 seconds</a>
+      <a class="btn ghost" href="https://github.com/JCK-Sabords/token-maxxing">Star it on GitHub</a>
+    </div>
+  </header>
+
+  <section aria-label="The author's receipts">
+    <div class="receipts">
+      <div class="stat"><b>2.77B</b><span>tokens burned since May</span></div>
+      <div class="stat red"><b>$1,576</b><span>API-equivalent cost</span></div>
+      <div class="stat"><b>$140</b><span>actually paid</span></div>
+      <div class="stat green"><b>x11.3</b><span>subscription ROI</span></div>
+    </div>
+    <p class="lead">The author's real numbers. Somewhere in San Francisco, a CFO just whispered his name with hatred.</p>
+  </section>
+
+  <section>
+    <h2>What it shows</h2>
+    <ul class="features">
+      <li><b>Claude Code token usage per model</b>, this month and all time (Opus, Sonnet, Haiku, Fable).</li>
+      <li><b>The API-equivalent cost</b> of every reply, at Anthropic's public prices, cache writes and cache reads included. The bill you would pay with your own API key (BYOK).</li>
+      <li><b>Your subscription ROI</b>: API-equivalent cost divided by what you paid. Green when you're farming, red when you're getting played.</li>
+      <li><b>A monthly chart</b>, because number go up is the only cardio we do.</li>
+      <li><b>A profile picture frame</b> with your ROI on it: <a href="./flex/">Flex it</a>.</li>
+      <li><b>100% local</b>: it reads the transcripts already on your disk and sends nothing anywhere.</li>
+    </ul>
+  </section>
+
+  <section id="install">
+    <h2>Install</h2>
+    <p>In Claude Code, in a terminal:</p>
+    <pre>/plugin install token-maxxing --marketplace JCK-Sabords/token-maxxing</pre>
+    <p>Then type <code>/tokens</code>. In the Claude desktop app: click <b>+</b> next to the prompt, then <b>Plugins</b>, <b>Add marketplace</b> with <code>JCK-Sabords/token-maxxing</code>, then <b>Add plugin</b>.</p>
+    <p>Set your plan price (20, 100, 200...) with <code>/plugin configure token-maxxing@token-maxxing</code> to see your ROI.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <details open><summary>How can I see my Claude Code token usage per model?</summary><p>Install token-maxxing and type /tokens. A pane shows your tokens per model, this month and all time, with their API-equivalent cost.</p></details>
+    <details><summary>How much would my Claude Code usage cost on the API?</summary><p>token-maxxing prices every reply in your local Claude Code transcripts at Anthropic's public API rates: input, output, cache writes (1.25x for 5 minutes, 2x for 1 hour) and cache reads at each model's own rate.</p></details>
+    <details><summary>Is a Claude subscription worth it compared to the API?</summary><p>Set your plan price and token-maxxing shows the ratio between your API-equivalent cost and what you paid, this month and since your first month. Above x1, the subscription pays for itself.</p></details>
+    <details><summary>Does it send my data anywhere?</summary><p>No. It reads files already on your disk and does arithmetic. It never touches your account or the network.</p></details>
+    <details><summary>Why do my numbers look low?</summary><p>Only local sessions count: cloud sessions and claude.ai chats leave no transcript on your disk. Or you're just not maxxing hard enough.</p></details>
+    <details><summary>Does it work in the Claude desktop app and VS Code?</summary><p>Yes. It works in the Claude Code CLI, the Code tab of the desktop app and the VS Code extension (Claude Code v2.1.287 or later, v2.1.286 in the desktop app).</p></details>
+    <details><summary>Is it free?</summary><p>The mod is free and open source (MIT). The profile picture frame is free with a small signature, or 0.99 EUR in HD without it.</p></details>
+  </section>
+
+  <footer>
+    token-maxxing is a fan project, not affiliated with Anthropic. MIT license. <a href="https://github.com/JCK-Sabords/token-maxxing">Source on GitHub</a>.
+  </footer>
+</div>
 </body>
 </html>

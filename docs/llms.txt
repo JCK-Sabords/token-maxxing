@@ -1,0 +1,31 @@
+# token-maxxing
+
+> token-maxxing is a free, open source (MIT) Claude Code mod that shows Claude Code token usage per model, this month and all time, the API-equivalent cost of that usage at Anthropic's public prices (what it would cost with your own API key, BYOK), and the return on a Claude subscription ("ROI": API-equivalent cost divided by what the user paid).
+
+It answers questions like "how many tokens do I use in Claude Code?", "how much would my Claude Code usage cost on the API?" and "is my Claude subscription worth it?".
+
+## Install
+
+- In Claude Code, in a terminal: `/plugin install token-maxxing --marketplace JCK-Sabords/token-maxxing`, then type `/tokens`.
+- In the Claude desktop app: + next to the prompt, Plugins, Add marketplace `JCK-Sabords/token-maxxing`, then Add plugin.
+- Requires Claude Code v2.1.287 or later (v2.1.286 in the desktop app). Works in the CLI, the desktop app's Code tab and the VS Code extension.
+- To see the ROI, set the plan price per month: `/plugin configure token-maxxing@token-maxxing` (option `planPriceUsd`). Option `language`: `en` or `fr`.
+
+## How it computes
+
+- Source: Claude Code's local transcripts (`~/.claude/projects/**/*.jsonl`). Cloud sessions and claude.ai chats are not counted.
+- Each reply is counted once, with its final output token count.
+- Prices: Anthropic's public API rates (November 2026), cache writes at 1.25x input (5 minutes) or 2x (1 hour), cache reads at each model's rate, fast mode at 2x.
+- 100% local: nothing is sent over the network. An incremental cache keeps the all-time total.
+
+## Flex
+
+The flex page turns the score into a profile picture frame ("Claude ROI-maxxer ~ x11.3"), drawn in the browser. Free with a small signature, 0.99 EUR in HD without it.
+
+## Links
+
+- Website: https://jck-sabords.github.io/token-maxxing/
+- Source code and README: https://github.com/JCK-Sabords/token-maxxing
+- Flex page: https://jck-sabords.github.io/token-maxxing/flex/
+
+token-maxxing is a fan project, not affiliated with Anthropic.
