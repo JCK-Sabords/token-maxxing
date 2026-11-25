@@ -44,7 +44,7 @@
     { "@type": "Question", "name": "Is my Claude subscription worth it compared to the API?",
       "acceptedAnswer": { "@type": "Answer", "text": "Set your plan price in token-maxxing. It divides your API-equivalent cost by what you paid and shows the ratio: green above x1 when the subscription pays for itself, red below." } },
     { "@type": "Question", "name": "Does token-maxxing send my data anywhere?",
-      "acceptedAnswer": { "@type": "Answer", "text": "No. It only reads Claude Code transcripts already on your disk and does the math locally. Nothing is sent over the network." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "No. It reads your Claude Code transcripts, keeps a small cache in ~/.claude/token-maxxing/cache.json, and may run printenv to find your home folder. It makes no network calls and never touches your account." } },
     { "@type": "Question", "name": "Does it work in the Claude desktop app?",
       "acceptedAnswer": { "@type": "Answer", "text": "Yes. token-maxxing works in the Claude Code CLI, the Code tab of the Claude desktop app and the VS Code extension. It needs Claude Code v2.1.287 or later (v2.1.286 in the desktop app)." } }
   ]
@@ -116,7 +116,7 @@
       <li><b>Your subscription ROI</b>: API-equivalent cost divided by what you paid. Green when you're farming, red when you're getting played.</li>
       <li><b>A monthly chart</b>, because number go up is the only cardio we do.</li>
       <li><b>A profile picture frame</b> with your ROI on it: <a href="./flex/">Flex it</a>.</li>
-      <li><b>100% local</b>: it reads the transcripts already on your disk and sends nothing anywhere.</li>
+      <li><b>100% local</b>: it reads your transcripts, keeps a small cache and makes zero network calls.</li>
     </ul>
   </section>
 
@@ -133,7 +133,7 @@
     <details open><summary>How can I see my Claude Code token usage per model?</summary><p>Install token-maxxing and type /tokens. A pane shows your tokens per model, this month and all time, with their API-equivalent cost.</p></details>
     <details><summary>How much would my Claude Code usage cost on the API?</summary><p>token-maxxing prices every reply in your local Claude Code transcripts at Anthropic's public API rates: input, output, cache writes (1.25x for 5 minutes, 2x for 1 hour) and cache reads at each model's own rate.</p></details>
     <details><summary>Is a Claude subscription worth it compared to the API?</summary><p>Set your plan price and token-maxxing shows the ratio between your API-equivalent cost and what you paid, this month and since your first month. Above x1, the subscription pays for itself.</p></details>
-    <details><summary>Does it send my data anywhere?</summary><p>No. It reads files already on your disk and does arithmetic. It never touches your account or the network.</p></details>
+    <details><summary>Does it send my data anywhere?</summary><p>No. It reads your Claude Code transcripts, keeps a small cache in ~/.claude/token-maxxing/cache.json, and may run printenv to find your home folder. It makes no network calls and never touches your account.</p></details>
     <details><summary>Why do my numbers look low?</summary><p>Only local sessions count: cloud sessions and claude.ai chats leave no transcript on your disk. Or you're just not maxxing hard enough.</p></details>
     <details><summary>Does it work in the Claude desktop app and VS Code?</summary><p>Yes. It works in the Claude Code CLI, the Code tab of the desktop app and the VS Code extension (Claude Code v2.1.287 or later, v2.1.286 in the desktop app).</p></details>
     <details><summary>Is it free?</summary><p>The mod is free and open source (MIT). The profile picture frame is free with a small signature, or 0.99 EUR in HD without it.</p></details>

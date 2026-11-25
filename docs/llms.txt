@@ -16,7 +16,7 @@ It answers questions like "how many tokens do I use in Claude Code?", "how much 
 - Source: Claude Code's local transcripts (`~/.claude/projects/**/*.jsonl`). Cloud sessions and claude.ai chats are not counted.
 - Each reply is counted once, with its final output token count.
 - Prices: Anthropic's public API rates (November 2026), cache writes at 1.25x input (5 minutes) or 2x (1 hour), cache reads at each model's rate, fast mode at 2x.
-- 100% local: nothing is sent over the network. An incremental cache keeps the all-time total.
+- 100% local: it reads the transcripts, writes a small cache (~/.claude/token-maxxing/cache.json) that keeps the all-time total, may run printenv to find the home folder, and makes no network calls.
 
 ## Flex
 

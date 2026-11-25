@@ -51,7 +51,7 @@ Somewhere in San Francisco, a CFO just whispered my name with hatred. 😭
 - 📈 **A monthly chart**, because number go up is the only cardio we do
 - 🖼️ **A profile picture frame** with your ROI on it, #OpenToWork style, but for people who actually work
 - ⚡ **Fast**: only new lines are read, after each Claude reply
-- 🔒 **100% local**: reads files already on your disk and sends nothing anywhere (unlike your dignity)
+- 🔒 **100% local**: reads your transcripts, keeps a small cache, makes zero network calls (unlike your dignity)
 
 Works in the Claude Code CLI, the desktop app and VS Code.
 
@@ -127,7 +127,7 @@ Your photo never leaves your browser: the frame is drawn on your machine. The fr
 ## FAQ
 
 **Will this get me banned?**
-No. It reads files that are already on your disk and does arithmetic. It never touches your account or the network.
+No. It reads your Claude Code transcripts, keeps a small cache in ~/.claude/token-maxxing/cache.json, and may run printenv to find your home folder. It makes no network calls and never touches your account.
 
 **My numbers look low.**
 Only local sessions count (see above). Or you're just not maxxing hard enough. Skill issue.
