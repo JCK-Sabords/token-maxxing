@@ -1,6 +1,6 @@
 {
   "name": "token-maxxing",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Token-maxxing pane: monthly and all-time token use per model, with what it would have cost on the API (BYOK). Opens on a new session and with /tokens.",
   "author": {
     "name": "JCK"

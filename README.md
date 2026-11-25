@@ -10,7 +10,7 @@ Un panneau à côté de la conversation, qui s'ouvre au démarrage d'une nouvell
 
 - **Onglets** Ce mois / Total
 - **Le montant** équivalent API en grand, avec le nombre de tokens et de réponses
-- **Une jauge** « abonnement rentabilisé x3,7 » (si le prix de ton abonnement est renseigné)
+- **Une jauge** « abonnement rentabilisé x3,7 », pour le mois et, dans Total, pour l'abonnement cumulé depuis le premier mois (si le prix de ton abonnement est renseigné)
 - **Un histogramme mensuel** (onglet Total)
 - **La répartition par modèle** : une couleur par famille (Opus, Sonnet, Haiku, Fable), coût, tokens et part du total
 

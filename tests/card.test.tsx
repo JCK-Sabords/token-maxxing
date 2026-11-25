@@ -39,6 +39,9 @@ function engine(on: any, surfaces: string[]) {
     return { value: TRANSCRIPT.slice(offset, e.length === undefined ? undefined : offset + e.length) }
   })
   on('fs.write', () => ({ value: undefined }))
+  on('ui.log', () => ({ value: undefined }))
+  // Where the mod is not under a .claude folder, it asks the environment.
+  on('process.run', () => ({ value: { stdout: '/home/test\n', stderr: '', exitCode: 0 } }))
 }
 
 test('the pane shows this month, then all time, at API prices', { options: { planPriceUsd: 20 } } as never, async ($, on) => {
@@ -57,6 +60,9 @@ test('the pane shows this month, then all time, at API prices', { options: { pla
   expect(await ui.find({ type: 'Text', text: /^16,20 \$$/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /^sonnet-5$/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /^14,00 \$$/ })).toBeDefined()
+  // Oct. and Nov. at 20 $: 40 $ paid against 16,20 $ of API cost
+  expect(await ui.find({ type: 'Text', text: /^Abonnement 40,00 \$ sur 2 mois$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /rentabilisé x0,4/ })).toBeDefined()
   await ui.unmount()
 })
 

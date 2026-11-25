@@ -172,8 +172,24 @@ async function transcripts($: EngineInterface, dir: string, depth: number, found
   }
 }
 
+// The Claude Code config folder: from where the mod is installed, else from the environment
+// (a mod loaded with --plugin-dir from a folder outside ~/.claude, or a custom CLAUDE_CONFIG_DIR).
+async function findClaudeDir($: EngineInterface) {
+  const fromRoot = claudeDirOf($.plugin.root)
+  if (fromRoot) return fromRoot
+  const read = async (command: string[]) => {
+    const ran = await $.process.run(command).catch(() => undefined)
+    const out = ran && ran.exitCode === 0 ? ran.stdout.trim() : ''
+    return out && !out.includes('%') ? out : undefined
+  }
+  const configDir = await read(['printenv', 'CLAUDE_CONFIG_DIR'])
+  if (configDir) return configDir
+  const home = (await read(['printenv', 'HOME'])) ?? (await read(['cmd', '/c', 'echo %USERPROFILE%']))
+  return home ? `${home.replace(/[\\/]+$/, '')}/.claude` : undefined
+}
+
 async function scan($: EngineInterface) {
-  const claudeDir = claudeDirOf($.plugin.root)
+  const claudeDir = await findClaudeDir($)
   if (!claudeDir) {
     lastError = 'dossier ~/.claude introuvable'
     return
@@ -354,12 +370,30 @@ function blocks(share: number, width: number) {
   return `${'█'.repeat(filled)}${'░'.repeat(width - filled)}`
 }
 
-function textReport(view: View, planPriceUsd: number) {
+type Subscription = { label: string; paid: number; ratio: number }
+
+// Months from `from` to `to`, both counted: 2026-05 to 2026-11 is 7.
+function monthsBetween(from: string, to: string) {
+  const [fromYear, fromMonth] = from.split('-').map(Number)
+  const [toYear, toMonth] = to.split('-').map(Number)
+  return Math.max(1, (toYear - fromYear) * 12 + (toMonth - fromMonth) + 1)
+}
+
+// What the subscription cost over the period shown: this month, or every month since the first one with data.
+function subscriptionOf(view: View, tab: Tab, month: string, planPriceUsd: number): Subscription | undefined {
+  if (planPriceUsd <= 0) return undefined
+  if (tab === 'month') return { label: `Abonnement ${usd(planPriceUsd)} / mois`, paid: planPriceUsd, ratio: view.cost / planPriceUsd }
+  const months = monthsBetween(view.months[0]?.month ?? month, month)
+  const paid = planPriceUsd * months
+  return { label: `Abonnement ${usd(paid)} sur ${months} mois`, paid, ratio: view.cost / paid }
+}
+
+function textReport(view: View, subscription: Subscription | undefined) {
   const lines = [
     `Token-maxxing · coût équivalent API · ${view.period}`,
     `${usd(view.cost)}  ·  ${tokenCount(view.tokens)} tokens  ·  ${groupThousands(view.replies)} réponses`,
   ]
-  if (planPriceUsd > 0) lines.push(`Abonnement ${usd(planPriceUsd)} rentabilisé ${times(view.cost / planPriceUsd)}`)
+  if (subscription) lines.push(`${subscription.label} · rentabilisé ${times(subscription.ratio)}`)
   lines.push('')
   const width = Math.max(8, ...view.models.map(line => shortModel(line.model).length))
   for (const line of view.models) {
@@ -423,7 +457,10 @@ export const register: Register = (on, rawOptions) => {
       if (!stats) return { text: `Token-maxxing : historique illisible${lastError ? ` (${lastError})` : ''}` }
       const month = new Date(await $.clock.now()).toISOString().slice(0, 7)
       return {
-        text: `${textReport(viewOf(stats, month, 'month'), planPriceUsd)}\n\n${textReport(viewOf(stats, month, 'all'), 0)}`,
+        text: [
+          textReport(viewOf(stats, month, 'month'), subscriptionOf(viewOf(stats, month, 'month'), 'month', month, planPriceUsd)),
+          textReport(viewOf(stats, month, 'all'), subscriptionOf(viewOf(stats, month, 'all'), 'all', month, planPriceUsd)),
+        ].join('\n\n'),
         isTextDisplayOnly: true,
       }
     }
@@ -449,7 +486,7 @@ export const register: Register = (on, rawOptions) => {
 
     const month = new Date(now).toISOString().slice(0, 7)
     const view = viewOf(stats, month, tab)
-    const ratio = planPriceUsd > 0 && tab === 'month' ? view.cost / planPriceUsd : undefined
+    const subscription = subscriptionOf(view, tab, month, planPriceUsd)
     const tabs = (
       <Box key="tabs" flexDirection="row" gap="xs">
         <Button key="tab-month" label="Ce mois" variant={tab === 'month' ? 'primary' : 'secondary'} onPress={() => selectTab($, 'month')} />
@@ -461,7 +498,7 @@ export const register: Register = (on, rawOptions) => {
       return (
         <Box flexDirection="column" gap={1}>
           {tabs}
-          <Text>{textReport(view, tab === 'month' ? planPriceUsd : 0)}</Text>
+          <Text>{textReport(view, subscription)}</Text>
           <Text dimColor>Sessions locales · {sinceLastScan(now)}</Text>
         </Box>
       )
@@ -485,15 +522,15 @@ export const register: Register = (on, rawOptions) => {
           </Text>
         </Box>
 
-        {ratio !== undefined && (
+        {subscription && (
           <Box flexDirection="column" gap="xs">
             <Box flexDirection="row" justifyContent="space-between">
-              <Text size="caption" dimColor>Abonnement {usd(planPriceUsd)} / mois</Text>
-              <Text size="caption" weight="semibold" color={ratio >= 1 ? GOOD : WARN} tabular>
-                rentabilisé {times(ratio)}
+              <Text size="caption" dimColor tabular>{subscription.label}</Text>
+              <Text size="caption" weight="semibold" color={subscription.ratio >= 1 ? GOOD : WARN} tabular>
+                rentabilisé {times(subscription.ratio)}
               </Text>
             </Box>
-            <Svg source={gaugeSvg(width, ratio)} alt={`Rentabilisé ${times(ratio)}`} width={width} height={10} />
+            <Svg source={gaugeSvg(width, subscription.ratio)} alt={`Rentabilisé ${times(subscription.ratio)}`} width={width} height={10} />
           </Box>
         )}
 
