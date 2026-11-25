@@ -15,7 +15,7 @@ const PANE = {
   plugin: 'token-maxxing',
   component: 'Pane',
   requestId: 'token-maxxing',
-  props: { title: 'Token-maxxing', isFocused: false, bodyColumns: 46, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} },
+  props: { title: 'token-maxxing', isFocused: false, bodyColumns: 46, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} },
 } as const
 
 // The engine beneath the mod: one project with one transcript, no cache yet.
@@ -50,19 +50,32 @@ test('the pane shows this month, then all time, at API prices', { options: { pla
   await $.command.run({ command: 'tokens', args: '' } as never)
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' } as never)
-  // Nov.: opus-5-5 = 1000*4 + 1M*0.2 + 100k*20 = 2,204 $ ; plan 20 $ -> x0,1
-  expect(await ui.find({ type: 'Text', text: /^2,20 \$$/ })).toBeDefined()
-  expect(await ui.find({ type: 'Text', text: /rentabilisé x0,1/ })).toBeDefined()
+  // Nov.: opus-5-5 = 1000*4 + 1M*0.2 + 100k*20 = $2.204 ; plan $20 -> ROI x0.1
+  expect(await ui.find({ type: 'Text', text: /^\$2\.20$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^Subscription \$20\.00\/month$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^ROI x0\.1$/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /^sonnet-5$/ })).toBeUndefined()
 
   await ui.press({ key: 'tab-all' })
-  // All time adds sonnet-5 = 1M*2*2 (1h cache write) + 1M*10 = 14 $
-  expect(await ui.find({ type: 'Text', text: /^16,20 \$$/ })).toBeDefined()
+  // All time adds sonnet-5 = 1M*2*2 (1h cache write) + 1M*10 = $14
+  expect(await ui.find({ type: 'Text', text: /^\$16\.20$/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /^sonnet-5$/ })).toBeDefined()
-  expect(await ui.find({ type: 'Text', text: /^14,00 \$$/ })).toBeDefined()
-  // Oct. and Nov. at 20 $: 40 $ paid against 16,20 $ of API cost
-  expect(await ui.find({ type: 'Text', text: /^Abonnement 40,00 \$ sur 2 mois$/ })).toBeDefined()
-  expect(await ui.find({ type: 'Text', text: /rentabilisé x0,4/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^\$14\.00$/ })).toBeDefined()
+  // Oct. and Nov. at $20: $40 paid against $16.20 of API cost
+  expect(await ui.find({ type: 'Text', text: /^Subscription \$40\.00 over 2 months$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^ROI x0\.4$/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('language: fr draws the pane in French', { options: { planPriceUsd: 20, language: 'fr' } } as never, async ($, on) => {
+  engine(on, ['desktop'])
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  await $.command.run({ command: 'tokens', args: '' } as never)
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' } as never)
+  expect(await ui.find({ type: 'Text', text: /^2,20 \$$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^Abonnement 20,00 \$ \/ mois$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^rentabilisé x0,1$/ })).toBeDefined()
   await ui.unmount()
 })
 
@@ -70,9 +83,9 @@ test('/tokens answers with text where no surface draws a pane', async ($, on) =>
   engine(on, [])
   await $.session.start({ cwd: '/', surface: null, isInteractive: false })
   const ran = (await $.command.run({ command: 'tokens', args: '' } as never)) as { text?: string }
-  expect(ran.text).toMatch(/nov\. 2026/)
-  expect(ran.text).toMatch(/opus-5-5 .*2,20 \$/)
-  expect(ran.text).toMatch(/depuis le début\n16,20 \$/)
+  expect(ran.text).toMatch(/Nov 2026/)
+  expect(ran.text).toMatch(/opus-5-5 .*\$2\.20/)
+  expect(ran.text).toMatch(/all time\n\$16\.20/)
 })
 
 test('the pane also draws in the terminal', async ($, on) => {
@@ -80,6 +93,6 @@ test('the pane also draws in the terminal', async ($, on) => {
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
   await $.command.run({ command: 'tokens', args: '' } as never)
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' } as never)
-  expect((await ui.find({ type: 'Text', text: /Token-maxxing/ }))?.text).toMatch(/2,20 \$/)
+  expect((await ui.find({ type: 'Text', text: /token-maxxing/ }))?.text).toMatch(/\$2\.20/)
   await ui.unmount()
 })

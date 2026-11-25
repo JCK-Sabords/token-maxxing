@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="token-maxxing: you paid $140, you burned $1,576, ROI x11.3">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#1c1f3d"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.55" r="0.45">
+      <stop offset="0" stop-color="#3fb950" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#3fb950" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="400" rx="28" fill="url(#bg)"/>
+  <rect width="1280" height="400" rx="28" fill="url(#glow)"/>
+
+  <text x="64" y="82" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="26" fill="#8b949e">token-maxxing <tspan fill="#6e7681">· a Claude Code mod</tspan></text>
+
+  <text x="64" y="196" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="700" fill="#e6edf3">You paid $140.</text>
+  <text x="64" y="280" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="700" fill="#ff7b72">You burned $1,576.</text>
+
+  <text x="1216" y="132" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="26" fill="#3fb950" fill-opacity="0.85">subscription ROI</text>
+  <text x="1216" y="270" text-anchor="end" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="150" font-weight="800" fill="#3fb950">x11.3</text>
+
+  <text x="64" y="352" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="26" fill="#8b949e">Looksmaxxing is over. Welcome to token-maxxing.</text>
+  <text x="1216" y="352" text-anchor="end" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="18" fill="#6e7681">the author's real stats, May to Nov 2026</text>
+</svg>

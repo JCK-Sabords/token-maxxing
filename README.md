@@ -1,55 +1,138 @@
-# token-maxxing
+<p align="center">
+  <img src="assets/banner.svg" alt="You paid $140. You burned $1,576. Subscription ROI x11.3." width="100%">
+</p>
 
-Un mod Claude Code pour jouer au token-maxxing : combien de tokens tu as brûlés, par modèle, ce mois-ci et depuis le début, et **ce que ça t'aurait coûté en BYOK** (au tarif de l'API Anthropic). Si tu renseignes le prix de ton abonnement, il te dit combien de fois tu l'as rentabilisé.
+<h1 align="center">token-maxxing</h1>
 
-*A Claude Code mod that shows your token use per model, this month and all time, with what it would have cost on the Anthropic API (BYOK), and how many times your subscription paid for itself.*
+<p align="center">
+  <b>Looksmaxxing is over. Welcome to token-maxxing.</b><br>
+  A Claude Code mod that shows how much your flat-rate plan is quietly costing Anthropic:<br>
+  tokens per model, the API bill you dodged, and your subscription ROI. In one pane.
+</p>
 
-## Ce que ça affiche
+<p align="center">
+  <img src="https://img.shields.io/badge/Claude%20Code-mod-7c8cff" alt="Claude Code mod">
+  <img src="https://img.shields.io/badge/license-MIT-3fb950" alt="License: MIT">
+  <img src="https://img.shields.io/badge/data-100%25%20local-8b949e" alt="Data: 100% local">
+  <img src="https://img.shields.io/badge/Anthropic's%20CFO-crying-f85149" alt="Anthropic's CFO: crying">
+</p>
 
-Un panneau à côté de la conversation, qui s'ouvre au démarrage d'une nouvelle session et avec `/tokens` :
+---
 
-- **Onglets** Ce mois / Total
-- **Le montant** équivalent API en grand, avec le nombre de tokens et de réponses
-- **Le taux de rentabilité** de ton abonnement (« rentabilisé x3,7 », en vert à partir de x1, en rouge en dessous) : pour le mois et, dans Total, pour l'abonnement cumulé depuis le premier mois. Affiché si le prix de ton abonnement est renseigné.
-- **Un histogramme mensuel** (onglet Total)
-- **La répartition par modèle** : une couleur par famille (Opus, Sonnet, Haiku, Fable), coût, tokens et part du total
+## Why
 
-## Installation
+You pay $20 a month. You use Claude Code like it owes you money.
+At some point you have to ask the question of our generation:
 
-Dans un terminal, à l'invite de Claude Code :
+> *"How much would I have paid if I was on the API, like a responsible adult?"*
+
+token-maxxing answers it. To the cent. Cache included. No cap.
+
+## The author's receipts
+
+Real numbers, May to November 2026:
+
+| | |
+| --- | ---: |
+| Tokens burned | **2.77 billion** |
+| What it would have cost on the API | **$1,576** |
+| What I actually paid | **$140** |
+| Subscription ROI | **x11.3** 🟢 |
+
+Somewhere in San Francisco, a CFO just whispered my name with hatred. 😭
+
+## What you get
+
+- 📊 **Tokens per model**, this month and all time
+- 💸 **The API bill you dodged**, at public API prices, cache writes and reads included
+- 🟢 **Your ROI**: green when you're farming, red when you're getting played
+- 📈 **A monthly chart**, because number go up is the only cardio we do
+- ⚡ **Fast**: only new lines are read, after each Claude reply
+- 🔒 **100% local**: reads files already on your disk and sends nothing anywhere (unlike your dignity)
+
+Works in the Claude Code CLI, the desktop app and VS Code.
+
+## Install (10 seconds)
+
+In Claude Code, in a terminal:
 
 ```
 /plugin install token-maxxing --marketplace JCK-Sabords/token-maxxing
 ```
 
-Ou depuis un shell :
+From your shell:
 
 ```
 claude plugin install token-maxxing --marketplace JCK-Sabords/token-maxxing
 ```
 
-Dans l'app desktop (où `/plugin` ne marche pas) : clique sur **+** à côté du champ de saisie, puis **Plugins**, **Add marketplace** avec `JCK-Sabords/token-maxxing`, puis **Add plugin**.
+In the desktop app: click **+** next to the prompt, then **Plugins**, **Add marketplace** with `JCK-Sabords/token-maxxing`, then **Add plugin**.
 
-Nécessite Claude Code v2.1.287 ou plus récent (v2.1.286 dans l'app desktop).
+Requires Claude Code v2.1.287 or later (v2.1.286 or later in the desktop app).
 
-## Réglages
+## Flex responsibly
 
-| Option | Par défaut | Rôle |
+Tell it what you pay, so it can tell you how hard you're winning:
+
+```
+/plugin configure token-maxxing@token-maxxing
+```
+
+| Option | Default | What it does |
 | --- | --- | --- |
-| `planPriceUsd` | `0` | Prix de ton abonnement en $/mois. Affiche la jauge de rentabilité. `0` la masque. |
-| `openOnNewSession` | `true` | Ouvre le panneau quand une nouvelle session démarre. |
+| `planPriceUsd` | `0` | Your plan price per month (20, 100, 200...). Shows your ROI this month and all time. `0` hides it. |
+| `openOnNewSession` | `true` | Opens the pane when a new session starts. |
+| `language` | `en` | `en` or `fr`. Oui, on parle français. |
 
-Dans Claude Code : `/plugin configure token-maxxing@token-maxxing`.
+## Usage
 
-## Comment c'est calculé
+- The pane opens by itself when you start a new session.
+- Type `/tokens` to open it anytime.
+- No UI? `claude -p "/tokens"` prints the receipts right in your terminal:
 
-- **Source** : les transcripts locaux de Claude Code (`~/.claude/projects/**/*.jsonl`). Les sessions cloud et les conversations claude.ai, qui n'ont pas de transcript sur ton disque, ne sont pas comptées.
-- **Chaque réponse est comptée une fois** : les transcripts écrivent plusieurs lignes par réponse, avec un nombre de tokens de sortie partiel puis final. Le mod garde le final.
-- **Prix** : tarifs publics de l'API Anthropic (novembre 2026), cache compris : écriture du cache ×1,25 (5 min) ou ×2 (1 h), lecture au tarif propre à chaque modèle, mode fast ×2. Les tarifs sont dans `hooks/register.tsx` (`PRICES`).
-- **Incrémental** : un cache dans `~/.claude/token-maxxing/cache.json` retient ce qui a déjà été lu. Seules les nouvelles lignes sont relues, après chaque réponse de Claude. Le cache garde aussi le cumul quand Claude Code efface d'anciens transcripts.
+```
+token-maxxing · API-equivalent cost · all time
+$1,576  ·  2.77B tokens  ·  11,641 replies
+Subscription $140 over 7 months · ROI x11.3
 
-Le mod lit tes fichiers locaux et n'envoie rien sur le réseau.
+opus-5      ███████░░░░░       $884     1.00B
+opus-5-5    ███░░░░░░░░░       $332    793.7M
+sonnet-5    ██░░░░░░░░░░       $259    734.0M
+sonnet-5-5  ░░░░░░░░░░░░     $49.05    179.4M
+opus-4-8    ░░░░░░░░░░░░     $32.64     28.8M
+```
 
-## Licence
+## How the math works (for the nerds)
 
-MIT
+- **Source**: Claude Code's local transcripts (`~/.claude/projects/**/*.jsonl`). Cloud sessions and claude.ai chats leave nothing on your disk, so they don't count. Sorry, your best work happened off the books.
+- **One reply, counted once**: transcripts write several lines per reply, a partial output count first and the final one last. The mod keeps the final one.
+- **Prices**: Anthropic's public API rates (November 2026). Cache writes at 1.25x input (5 min) or 2x (1 h), cache reads at each model's own rate, fast mode at 2x. It's all in `PRICES` in `hooks/register.tsx`.
+- **Incremental**: a cache in `~/.claude/token-maxxing/cache.json` remembers what was already read, and keeps your all-time total even after Claude Code deletes old transcripts. Your sins are remembered.
+
+## FAQ
+
+**Will this get me banned?**
+No. It reads files that are already on your disk and does arithmetic. It never touches your account or the network.
+
+**My numbers look low.**
+Only local sessions count (see above). Or you're just not maxxing hard enough. Skill issue.
+
+**My ROI is x1. Is that bad?**
+You're paying for a gym membership you never go to. Respectfully: cooked.
+
+**Anthropic changed its prices.**
+Update `PRICES` in `hooks/register.tsx` and open a PR. You'll be a hero.
+
+**It doesn't know a model that came out last week.**
+Its tokens still show up, at $0 until it has a price. PRs welcome.
+
+## Contributing
+
+PRs welcome, especially if you're funnier than me (low bar).
+Run the tests with `claude plugin test .`
+
+If this made you feel something (shame, mostly), drop a ⭐ and post your ratio.
+
+## License
+
+MIT. Do whatever you want. Just post your ratio.

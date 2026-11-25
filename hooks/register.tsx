@@ -191,7 +191,7 @@ async function findClaudeDir($: EngineInterface) {
 async function scan($: EngineInterface) {
   const claudeDir = await findClaudeDir($)
   if (!claudeDir) {
-    lastError = 'dossier ~/.claude introuvable'
+    lastError = t().noClaudeDir
     return
   }
   const cachePath = `${claudeDir}/token-maxxing/cache.json`
@@ -233,7 +233,64 @@ function refresh($: EngineInterface) {
 // ----- drawing -----
 
 const PANE = 'token-maxxing'
-const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
+
+// The pane speaks English by default; `language: fr` in the options switches it to French.
+type Lang = 'en' | 'fr'
+let lang: Lang = 'en'
+
+const TEXT = {
+  en: {
+    months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    thisMonth: 'This month',
+    allTime: 'All time',
+    allTimePeriod: 'all time',
+    apiCost: 'API-equivalent cost',
+    replies: 'replies',
+    planMonth: (price: string) => `Subscription ${price}/month`,
+    planTotal: (paid: string, months: number) => `Subscription ${paid} over ${months} month${months > 1 ? 's' : ''}`,
+    roi: 'ROI',
+    byMonth: 'By month',
+    byModel: 'By model',
+    ofCost: 'of the cost',
+    localSessions: (since?: string) => `Local sessions${since ? ` since ${since}` : ''}`,
+    neverUpdated: 'never updated',
+    justUpdated: 'updated just now',
+    updatedAgo: (minutes: number) => `updated ${minutes} min ago`,
+    close: 'Close',
+    reading: 'Reading your session history…',
+    cannotRead: (error: string) => `Could not read your history: ${error}`,
+    paneWaits: (reason: string) => `token-maxxing: pane waiting (${reason})`,
+    command: 'token-maxxing: tokens and API-equivalent cost per model, this month and all time',
+    chartAlt: 'API-equivalent cost per month',
+    noClaudeDir: 'could not find the ~/.claude folder',
+  },
+  fr: {
+    months: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+    thisMonth: 'Ce mois',
+    allTime: 'Total',
+    allTimePeriod: 'depuis le début',
+    apiCost: 'Coût équivalent API',
+    replies: 'réponses',
+    planMonth: (price: string) => `Abonnement ${price} / mois`,
+    planTotal: (paid: string, months: number) => `Abonnement ${paid} sur ${months} mois`,
+    roi: 'rentabilisé',
+    byMonth: 'Par mois',
+    byModel: 'Par modèle',
+    ofCost: 'du coût',
+    localSessions: (since?: string) => `Sessions locales${since ? ` depuis ${since}` : ''}`,
+    neverUpdated: 'jamais mis à jour',
+    justUpdated: "mis à jour à l'instant",
+    updatedAgo: (minutes: number) => `mis à jour il y a ${minutes} min`,
+    close: 'Fermer',
+    reading: "Lecture de l'historique des sessions…",
+    cannotRead: (error: string) => `Lecture impossible : ${error}`,
+    paneWaits: (reason: string) => `token-maxxing : panneau en attente (${reason})`,
+    command: 'token-maxxing : tokens et coût équivalent API par modèle, ce mois et depuis le début',
+    chartAlt: 'Coût équivalent API par mois',
+    noClaudeDir: 'dossier ~/.claude introuvable',
+  },
+}
+const t = () => TEXT[lang]
 
 // One accent for the whole pane, and one hue per model family.
 const ACCENT = '#7c8cff'
@@ -262,7 +319,7 @@ type View = {
 
 function monthLabel(month: string, withYear = true) {
   const [year, index] = month.split('-')
-  const name = MONTHS[Number(index) - 1] ?? month
+  const name = t().months[Number(index) - 1] ?? month
   return withYear ? `${name} ${year}` : name
 }
 
@@ -294,7 +351,7 @@ function viewOf(cache: Cache, month: string, tab: Tab): View {
     .slice(-12)
     .map(([key, value]) => ({ month: key, cost: value }))
   return {
-    period: tab === 'month' ? monthLabel(month) : 'depuis le début',
+    period: tab === 'month' ? monthLabel(month) : t().allTimePeriod,
     cost,
     tokens,
     replies,
@@ -304,28 +361,35 @@ function viewOf(cache: Cache, month: string, tab: Tab): View {
   }
 }
 
-// French number formats: 75,40 $ · 1 568 $ · 75,6 M · 2,74 Md
+// Number formats. en: $75.40 · $1,568 · 75.6M · 2.74B · 45% · x3.9
+//                 fr: 75,40 $ · 1 568 $ · 75,6 M · 2,74 Md · 45 % · x3,9
 function groupThousands(value: number) {
-  return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  const separator = lang === 'fr' ? ' ' : ','
+  return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, separator)
+}
+function decimal(value: number, digits: number) {
+  const text = value.toFixed(digits)
+  return lang === 'fr' ? text.replace('.', ',') : text
 }
 function usd(value: number) {
-  if (value >= 100) return `${groupThousands(value)} $`
-  return `${value.toFixed(2).replace('.', ',')} $`
+  const amount = value >= 100 ? groupThousands(value) : decimal(value, 2)
+  return lang === 'fr' ? `${amount} $` : `$${amount}`
 }
 function tokenCount(count: number) {
-  if (count >= 1e9) return `${(count / 1e9).toFixed(2).replace('.', ',')} Md`
-  if (count >= 1e6) return `${(count / 1e6).toFixed(1).replace('.', ',')} M`
-  if (count >= 1e3) return `${Math.round(count / 1e3)} k`
+  const space = lang === 'fr' ? ' ' : ''
+  if (count >= 1e9) return `${decimal(count / 1e9, 2)}${space}${lang === 'fr' ? 'Md' : 'B'}`
+  if (count >= 1e6) return `${decimal(count / 1e6, 1)}${space}M`
+  if (count >= 1e3) return `${Math.round(count / 1e3)}${space}k`
   return `${count}`
 }
-const percent = (share: number) => `${Math.round(share * 100)} %`
+const percent = (share: number) => `${Math.round(share * 100)}${lang === 'fr' ? ' ' : ''}%`
 const shortModel = (model: string) => model.replace(/^claude-/, '')
-const times = (ratio: number) => `x${ratio.toFixed(1).replace('.', ',')}`
+const times = (ratio: number) => `x${decimal(ratio, 1)}`
 
 function sinceLastScan(now: number) {
-  if (lastScanAt === 0) return 'jamais mis à jour'
+  if (lastScanAt === 0) return t().neverUpdated
   const minutes = Math.floor((now - lastScanAt) / 60_000)
-  return minutes < 1 ? "mis à jour à l'instant" : `mis à jour il y a ${minutes} min`
+  return minutes < 1 ? t().justUpdated : t().updatedAgo(minutes)
 }
 
 // ----- SVG pieces (desktop) -----
@@ -374,18 +438,18 @@ function monthsBetween(from: string, to: string) {
 // What the subscription cost over the period shown: this month, or every month since the first one with data.
 function subscriptionOf(view: View, tab: Tab, month: string, planPriceUsd: number): Subscription | undefined {
   if (planPriceUsd <= 0) return undefined
-  if (tab === 'month') return { label: `Abonnement ${usd(planPriceUsd)} / mois`, paid: planPriceUsd, ratio: view.cost / planPriceUsd }
+  if (tab === 'month') return { label: t().planMonth(usd(planPriceUsd)), paid: planPriceUsd, ratio: view.cost / planPriceUsd }
   const months = monthsBetween(view.months[0]?.month ?? month, month)
   const paid = planPriceUsd * months
-  return { label: `Abonnement ${usd(paid)} sur ${months} mois`, paid, ratio: view.cost / paid }
+  return { label: t().planTotal(usd(paid), months), paid, ratio: view.cost / paid }
 }
 
 function textReport(view: View, subscription: Subscription | undefined) {
   const lines = [
-    `Token-maxxing · coût équivalent API · ${view.period}`,
-    `${usd(view.cost)}  ·  ${tokenCount(view.tokens)} tokens  ·  ${groupThousands(view.replies)} réponses`,
+    `token-maxxing · ${t().apiCost} · ${view.period}`,
+    `${usd(view.cost)}  ·  ${tokenCount(view.tokens)} tokens  ·  ${groupThousands(view.replies)} ${t().replies}`,
   ]
-  if (subscription) lines.push(`${subscription.label} · rentabilisé ${times(subscription.ratio)}`)
+  if (subscription) lines.push(`${subscription.label} · ${t().roi} ${times(subscription.ratio)}`)
   lines.push('')
   const width = Math.max(8, ...view.models.map(line => shortModel(line.model).length))
   for (const line of view.models) {
@@ -397,10 +461,10 @@ function textReport(view: View, subscription: Subscription | undefined) {
 // ----- the pane -----
 
 async function openPane($: EngineInterface, isAsked: boolean) {
-  const opened = await $.ui.open({ id: PANE, title: 'Token-maxxing', columns: 46 })
+  const opened = await $.ui.open({ id: PANE, title: 'token-maxxing', columns: 46 })
   if (!opened.isPlaced) {
     $.ui.log(`token-maxxing: pane waits: ${opened.reason}`, { to: 'debug' })
-    if (isAsked) $.ui.toast(`Token-maxxing : panneau en attente (${opened.reason})`)
+    if (isAsked) $.ui.toast(t().paneWaits(opened.reason))
   }
   return opened.isPlaced
 }
@@ -418,14 +482,11 @@ export const register: Register = (on, rawOptions) => {
   // Values saved from /plugin configure can arrive as text.
   const planPriceUsd = Number(raw.planPriceUsd) || 0
   const openOnNewSession = String(raw.openOnNewSession ?? 'true') !== 'false'
+  lang = String(raw.language ?? 'en').trim().toLowerCase().startsWith('fr') ? 'fr' : 'en'
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)
-    await $.command.register({
-      name: 'tokens',
-      description: 'Token-maxxing : tokens et coût équivalent API par modèle, ce mois et depuis le début',
-      immediate: true,
-    })
+    await $.command.register({ name: 'tokens', description: t().command, immediate: true })
     void refresh($)
     const usage = await $.session.usage().catch(() => undefined)
     const isNew = !usage || (usage.cost?.usd ?? 0) === 0
@@ -446,12 +507,14 @@ export const register: Register = (on, rawOptions) => {
     if (!isPlaced) {
       // claude -p "/tokens": no pane to draw, answer with text.
       await refresh($)
-      if (!stats) return { text: `Token-maxxing : historique illisible${lastError ? ` (${lastError})` : ''}` }
+      if (!stats) return { text: `token-maxxing: ${t().cannotRead(lastError ?? '?')}` }
       const month = new Date(await $.clock.now()).toISOString().slice(0, 7)
+      const thisMonth = viewOf(stats, month, 'month')
+      const allTime = viewOf(stats, month, 'all')
       return {
         text: [
-          textReport(viewOf(stats, month, 'month'), subscriptionOf(viewOf(stats, month, 'month'), 'month', month, planPriceUsd)),
-          textReport(viewOf(stats, month, 'all'), subscriptionOf(viewOf(stats, month, 'all'), 'all', month, planPriceUsd)),
+          textReport(thisMonth, subscriptionOf(thisMonth, 'month', month, planPriceUsd)),
+          textReport(allTime, subscriptionOf(allTime, 'all', month, planPriceUsd)),
         ].join('\n\n'),
         isTextDisplayOnly: true,
       }
@@ -468,9 +531,9 @@ export const register: Register = (on, rawOptions) => {
     if (!stats || Object.keys(stats.buckets).length === 0) {
       return (
         <Box flexDirection="column" gap="sm" padding="sm">
-          <Text weight="semibold">Token-maxxing</Text>
+          <Text weight="semibold">token-maxxing</Text>
           <Text size="caption" dimColor>
-            {lastError ? `Lecture impossible : ${lastError}` : "Lecture de l'historique des sessions…"}
+            {lastError ? t().cannotRead(lastError) : t().reading}
           </Text>
         </Box>
       )
@@ -481,8 +544,8 @@ export const register: Register = (on, rawOptions) => {
     const subscription = subscriptionOf(view, tab, month, planPriceUsd)
     const tabs = (
       <Box key="tabs" flexDirection="row" gap="xs">
-        <Button key="tab-month" label="Ce mois" variant={tab === 'month' ? 'primary' : 'secondary'} onPress={() => selectTab($, 'month')} />
-        <Button key="tab-all" label="Total" variant={tab === 'all' ? 'primary' : 'secondary'} onPress={() => selectTab($, 'all')} />
+        <Button key="tab-month" label={t().thisMonth} variant={tab === 'month' ? 'primary' : 'secondary'} onPress={() => selectTab($, 'month')} />
+        <Button key="tab-all" label={t().allTime} variant={tab === 'all' ? 'primary' : 'secondary'} onPress={() => selectTab($, 'all')} />
       </Box>
     )
 
@@ -491,7 +554,7 @@ export const register: Register = (on, rawOptions) => {
         <Box flexDirection="column" gap={1}>
           {tabs}
           <Text>{textReport(view, subscription)}</Text>
-          <Text dimColor>Sessions locales · {sinceLastScan(now)}</Text>
+          <Text dimColor>{t().localSessions()} · {sinceLastScan(now)}</Text>
         </Box>
       )
     }
@@ -502,15 +565,15 @@ export const register: Register = (on, rawOptions) => {
     return (
       <Box flexDirection="column" gap="lg" padding="sm">
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-          <Text weight="semibold">Token-maxxing</Text>
+          <Text weight="semibold">token-maxxing</Text>
           {tabs}
         </Box>
 
         <Box flexDirection="column" gap="xs">
-          <Text size="caption" dimColor>Coût équivalent API · {view.period}</Text>
+          <Text size="caption" dimColor>{t().apiCost} · {view.period}</Text>
           <Text size="title" weight="bold" tabular>{usd(view.cost)}</Text>
           <Text size="caption" dimColor tabular>
-            {tokenCount(view.tokens)} tokens · {groupThousands(view.replies)} réponses
+            {tokenCount(view.tokens)} tokens · {groupThousands(view.replies)} {t().replies}
           </Text>
         </Box>
 
@@ -518,20 +581,20 @@ export const register: Register = (on, rawOptions) => {
           <Box flexDirection="row" justifyContent="space-between">
             <Text size="caption" dimColor tabular>{subscription.label}</Text>
             <Text size="caption" weight="semibold" color={subscription.ratio >= 1 ? GOOD : BAD} tabular>
-              rentabilisé {times(subscription.ratio)}
+              {t().roi} {times(subscription.ratio)}
             </Text>
           </Box>
         )}
 
         {tab === 'all' && view.months.length > 1 && (
           <Box flexDirection="column" gap="xs">
-            <Text size="caption" dimColor>Par mois</Text>
-            <Svg source={monthChartSvg(width, view.months, month)} alt="Coût équivalent API par mois" width={width} height={72} />
+            <Text size="caption" dimColor>{t().byMonth}</Text>
+            <Svg source={monthChartSvg(width, view.months, month)} alt={t().chartAlt} width={width} height={72} />
           </Box>
         )}
 
         <Box flexDirection="column" gap="md">
-          <Text size="caption" dimColor>Par modèle</Text>
+          <Text size="caption" dimColor>{t().byModel}</Text>
           {view.models.map(line => (
             <Box key={line.model} flexDirection="column" gap="xs">
               <Box flexDirection="row" justifyContent="space-between" alignItems="center">
@@ -541,7 +604,7 @@ export const register: Register = (on, rawOptions) => {
                 </Box>
                 <Text size="caption" weight="medium" tabular>{usd(line.cost)}</Text>
               </Box>
-              <Svg source={shareBarSvg(width, line.share, familyColor(line.model))} alt={`${percent(line.share)} du coût`} width={width} height={4} />
+              <Svg source={shareBarSvg(width, line.share, familyColor(line.model))} alt={`${percent(line.share)} ${t().ofCost}`} width={width} height={4} />
               <Text size="footnote" dimColor tabular>
                 {tokenCount(line.tokens)} tokens · {percent(line.share)}
               </Text>
@@ -551,9 +614,9 @@ export const register: Register = (on, rawOptions) => {
 
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
           <Text size="footnote" dimColor>
-            Sessions locales{view.since ? ` depuis ${view.since}` : ''} · {sinceLastScan(now)}
+            {t().localSessions(view.since)} · {sinceLastScan(now)}
           </Text>
-          <Button key="close" label="Fermer" role="dismiss" plain dimColor onPress={() => closePane($)} />
+          <Button key="close" label={t().close} role="dismiss" plain dimColor onPress={() => closePane($)} />
         </Box>
       </Box>
     )

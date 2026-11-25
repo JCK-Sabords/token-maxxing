@@ -1,7 +1,7 @@
 {
   "name": "token-maxxing",
-  "version": "0.3.1",
-  "description": "Token-maxxing pane: monthly and all-time token use per model, with what it would have cost on the API (BYOK). Opens on a new session and with /tokens.",
+  "version": "0.4.0",
+  "description": "Looksmaxxing is over. See your Claude Code tokens per model, this month and all time, what they'd have cost on the API (BYOK), and your subscription ROI.",
   "author": {
     "name": "JCK"
   },
@@ -9,7 +9,7 @@
     "planPriceUsd": {
       "type": "number",
       "title": "Subscription price ($/month)",
-      "description": "Your Claude plan price per month. When set, the card shows how many times this month's BYOK cost covers it. 0 hides it.",
+      "description": "Your Claude plan price per month (20, 100, 200...). Shows your subscription ROI, this month and all time. 0 hides it.",
       "default": 0
     },
     "openOnNewSession": {
@@ -17,6 +17,12 @@
       "title": "Open on new session",
       "description": "Open the pane when a new session starts.",
       "default": true
+    },
+    "language": {
+      "type": "string",
+      "title": "Language",
+      "description": "Pane language: en (default) or fr.",
+      "default": "en"
     }
   },
   "types": "./types/index.d.ts",
