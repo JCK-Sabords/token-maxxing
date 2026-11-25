@@ -1,0 +1,25 @@
+{
+  "name": "token-maxxing",
+  "version": "0.2.1",
+  "description": "Token-maxxing pane: monthly and all-time token use per model, with what it would have cost on the API (BYOK). Opens on a new session and with /tokens.",
+  "author": {
+    "name": "JCK"
+  },
+  "userConfig": {
+    "planPriceUsd": {
+      "type": "number",
+      "title": "Subscription price ($/month)",
+      "description": "Your Claude plan price per month. When set, the card shows how many times this month's BYOK cost covers it. 0 hides it.",
+      "default": 0
+    },
+    "openOnNewSession": {
+      "type": "boolean",
+      "title": "Open on new session",
+      "description": "Open the pane when a new session starts.",
+      "default": true
+    }
+  },
+  "types": "./types/index.d.ts",
+  "license": "MIT",
+  "repository": "https://github.com/JCK-Sabords/token-maxxing"
+}

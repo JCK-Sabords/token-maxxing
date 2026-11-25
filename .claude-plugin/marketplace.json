@@ -1,0 +1,11 @@
+{
+  "name": "token-maxxing",
+  "owner": { "name": "JCK" },
+  "plugins": [
+    {
+      "name": "token-maxxing",
+      "source": "./",
+      "description": "A pane showing your Claude Code token use per model, this month and all time, with what it would have cost on the API (BYOK)."
+    }
+  ]
+}
