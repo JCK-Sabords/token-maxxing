@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>token-maxxing · Flex your ROI</title>
+<title>token-maxxing: Flex your ROI</title>
 <meta name="description" content="Turn your token-maxxing score into a profile picture frame. Your photo never leaves your browser.">
-<meta property="og:title" content="token-maxxing · Flex your ROI">
+<meta property="og:title" content="token-maxxing: Flex your ROI">
 <meta property="og:description" content="Looksmaxxing is over. Put your subscription ROI on your profile picture.">
 <meta property="og:image" content="https://jck-sabords.github.io/token-maxxing/og.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -142,14 +142,14 @@ const TEXT = {
   en: {
     title: 'Flex your <em>ROI</em>.',
     subtitle: 'Turn your token-maxxing score into a profile picture frame for LinkedIn, Instagram or X. Your photo never leaves your browser.',
-    scoreStep: '1 · Your score',
+    scoreStep: '1. Your score',
     noScore: 'No score loaded. Open this page from the token-maxxing pane: install the mod, open it with /tokens, then press "Flex it". Meanwhile, here is a demo.',
     noScoreHow: 'The score is computed by the mod on your machine. This page only reads it from the link.',
     roiLabel: 'subscription ROI',
     tokensLabel: 'tokens',
     allTime: 'all time',
     since: 'since',
-    photoStep: '2 · Your photo',
+    photoStep: '2. Your photo',
     upload: 'Upload a photo',
     dropHint: 'or drop it on the circle',
     or: 'or use your GitHub avatar:',
@@ -158,32 +158,32 @@ const TEXT = {
     ghError: 'Could not load this GitHub avatar. Check the username, or upload a photo.',
     fileError: 'Could not read this image. Try a JPG or PNG.',
     privacy: '🔒 The frame is drawn in your browser. Nothing is uploaded anywhere.',
-    downloadStep: '3 · Download',
+    downloadStep: '3. Download',
     downloadFree: 'Download (free, with watermark)',
     downloadHd: 'Download HD',
-    removeWatermark: (price) => `Remove the watermark · ${price}`,
+    removeWatermark: (price) => `Remove the watermark (${price})`,
     needPhoto: 'Add a photo first.',
     needScore: 'Load your score from the mod to download your frame.',
-    freeNote: 'The free version carries a small "made with token-maxxing" mark. Consider it free advertising for your flex.',
+    freeNote: 'The free version signs the end of the band with a small "token-maxxing". Consider it free advertising for your flex.',
     paidNote: 'Payment is handled by Stripe. You come back here right after, with your frame ready.',
     thanks: 'Thank you, legend. Your frame is watermark-free.',
     styleGreen: 'Open to ROI',
     styleGold: 'Gold flex',
     styleTerminal: 'Terminal',
-    watermark: 'made with token-maxxing',
+    watermark: 'token-maxxing',
     footer: 'Made for fun. The score is computed by the token-maxxing mod on the user\'s own machine and is not verified by anyone. Not affiliated with Anthropic.',
   },
   fr: {
     title: 'Affiche ton <em>ROI</em>.',
     subtitle: 'Transforme ton score token-maxxing en cadre de photo de profil pour LinkedIn, Instagram ou X. Ta photo ne quitte jamais ton navigateur.',
-    scoreStep: '1 · Ton score',
+    scoreStep: '1. Ton score',
     noScore: 'Aucun score chargé. Ouvre cette page depuis le panneau token-maxxing : installe le mod, ouvre-le avec /tokens, puis clique sur « Flex ». En attendant, voici une démo.',
     noScoreHow: 'Le score est calculé par le mod sur ta machine. Cette page se contente de le lire dans le lien.',
     roiLabel: 'abonnement rentabilisé',
     tokensLabel: 'tokens',
     allTime: 'depuis le début',
     since: 'depuis',
-    photoStep: '2 · Ta photo',
+    photoStep: '2. Ta photo',
     upload: 'Choisir une photo',
     dropHint: 'ou dépose-la sur le cercle',
     or: 'ou utilise ton avatar GitHub :',
@@ -192,27 +192,30 @@ const TEXT = {
     ghError: 'Impossible de charger cet avatar GitHub. Vérifie le pseudo, ou choisis une photo.',
     fileError: 'Impossible de lire cette image. Essaie un JPG ou un PNG.',
     privacy: '🔒 Le cadre est dessiné dans ton navigateur. Rien n\'est envoyé nulle part.',
-    downloadStep: '3 · Télécharger',
+    downloadStep: '3. Télécharger',
     downloadFree: 'Télécharger (gratuit, avec filigrane)',
     downloadHd: 'Télécharger en HD',
-    removeWatermark: (price) => `Retirer le filigrane · ${price}`,
+    removeWatermark: (price) => `Retirer le filigrane (${price})`,
     needPhoto: 'Ajoute d\'abord une photo.',
     needScore: 'Charge ton score depuis le mod pour télécharger ton cadre.',
-    freeNote: 'La version gratuite porte une petite mention « made with token-maxxing ». Vois ça comme de la pub gratuite pour ton flex.',
+    freeNote: "La version gratuite signe le bout du bandeau d'un petit « token-maxxing ». Vois ça comme de la pub gratuite pour ton flex.",
     paidNote: 'Le paiement passe par Stripe. Tu reviens ici juste après, avec ton cadre prêt.',
     thanks: 'Merci, légende. Ton cadre est sans filigrane.',
     styleGreen: 'Open to ROI',
     styleGold: 'Flex doré',
     styleTerminal: 'Terminal',
-    watermark: 'made with token-maxxing',
+    watermark: 'token-maxxing',
     footer: 'Fait pour rire. Le score est calculé par le mod token-maxxing sur la machine de l\'utilisateur et n\'est vérifié par personne. Sans lien avec Anthropic.',
   },
 }
 
+const SANS = 'ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif'
+const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
+// band: the ring's color; edge: thin lines on both sides of it; mark: the free version's signature.
 const STYLES = {
-  green: { band: '#2f9e44', text: '#ffffff', font: '800 64px ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif', dot: '#2f9e44' },
-  gold: { band: '#e3b341', text: '#1b1f24', font: '800 64px ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif', dot: '#e3b341' },
-  terminal: { band: '#0d1117', text: '#3fb950', font: '700 58px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', dot: '#0d1117' },
+  green: { band: '#2f9e44', text: '#ffffff', font: `800 60px ${SANS}`, markFont: `600 30px ${SANS}`, dot: '#2f9e44' },
+  gold: { band: '#d9a520', edge: '#f7dc7a', text: '#2b1d00', font: `800 60px ${SANS}`, markFont: `600 30px ${SANS}`, dot: '#d9a520' },
+  terminal: { band: '#0d1117', edge: '#3fb950', text: '#3fb950', font: `700 54px ${MONO}`, markFont: `500 28px ${MONO}`, dot: '#0d1117' },
 }
 
 const DEMO_SCORE = { roi: 11.3, tokens: 2770000000, cost: 1576, period: 'all', since: '2026-05' }
@@ -280,7 +283,7 @@ function monthLabel(month) {
   return new Date(Date.UTC(year, index - 1, 1)).toLocaleDateString(state.lang === 'fr' ? 'fr-FR' : 'en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })
 }
 function frameText(score) {
-  return score.roi !== null ? `#ROIMAXXING · x${decimal(score.roi, 1)}` : `#TOKENMAXXING · ${tokenCount(score.tokens)}`
+  return score.roi !== null ? `Claude ROI-maxxer ~ x${decimal(score.roi, 1)}` : `Claude token-maxxer ~ ${tokenCount(score.tokens)} tokens`
 }
 
 // ----- drawing -----
@@ -363,6 +366,13 @@ function drawBottomText(text, cx, cy, r, midDeg, font, color, spacing) {
   })
 }
 
+// How many degrees of the circle a text takes at radius r.
+function arcOf(text, font, spacing, r) {
+  ctx.font = font
+  const total = [...text].reduce((sum, ch) => sum + ctx.measureText(ch).width + spacing, 0) - spacing
+  return (total / r) * (180 / Math.PI)
+}
+
 // Text along the top of the circle, read left to right.
 function drawTopText(text, cx, cy, r, midDeg, font, color, spacing) {
   ctx.font = font
@@ -394,13 +404,26 @@ function draw() {
 
   const band = 112
   const r = c - 8 - band / 2
-  drawBand(c, c, r, band, 18, 218, style.band)
-  drawBottomText(frameText(score), c, c, r, 118, style.font, style.text, 3)
+  const from = 12
+  const to = 222
+  drawBand(c, c, r, band, from, to, style.band)
+  if (style.edge) {
+    drawBand(c, c, r - band / 2 + 3, 3, from, to, style.edge)
+    drawBand(c, c, r + band / 2 - 3, 3, from, to, style.edge)
+  }
 
-  if (!state.isUnlocked) {
-    const wr = c - 8 - 24
-    drawBand(c, c, wr, 48, 236, 304, 'rgba(13, 17, 23, 0.62)')
-    drawTopText(t().watermark, c, c, wr, 270, '600 26px ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif', 'rgba(255, 255, 255, 0.92)', 1)
+  const main = frameText(score)
+  const mainArc = arcOf(main, style.font, 2, r)
+  const middle = (from + to) / 2
+  if (state.isUnlocked) {
+    drawBottomText(main, c, c, r, middle, style.font, style.text, 2)
+  } else {
+    // The free version signs the band's tail with a smaller, softer "token-maxxing".
+    const markArc = arcOf(t().watermark, style.markFont, 1, r)
+    const gap = 8
+    const start = middle + (mainArc + gap + markArc) / 2
+    drawBottomText(main, c, c, r, start - mainArc / 2, style.font, style.text, 2)
+    drawBottomText(t().watermark, c, c, r, start - mainArc - gap - markArc / 2, style.markFont, withAlpha(style.text, 0.7), 1)
   }
 
   if (state.isDemo) {
@@ -444,7 +467,7 @@ function renderText() {
     const s = state.score
     el('scoreBig').textContent = s.roi !== null ? `x${decimal(s.roi, 1)}` : tokenCount(s.tokens)
     const period = s.period === 'all' ? (s.since ? `${t().since} ${monthLabel(s.since)}` : t().allTime) : monthLabel(s.since || '')
-    el('scoreMeta').textContent = s.roi !== null ? `${t().roiLabel} · ${tokenCount(s.tokens)} ${t().tokensLabel} · ${period}` : `${t().tokensLabel} · ${period}`
+    el('scoreMeta').textContent = s.roi !== null ? `${t().roiLabel}, ${tokenCount(s.tokens)} ${t().tokensLabel}, ${period}` : `${t().tokensLabel}, ${period}`
   }
 
   const download = el('download')

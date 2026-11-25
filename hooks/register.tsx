@@ -246,6 +246,7 @@ const TEXT = {
     allTimePeriod: 'all time',
     apiCost: 'API-equivalent cost',
     replies: 'replies',
+    costLine: (cost: string, tokens: string, replies: string) => `${cost} for ${tokens} tokens and ${replies} replies`,
     planMonth: (price: string) => `Subscription ${price}/month`,
     planTotal: (paid: string, months: number) => `Subscription ${paid} over ${months} month${months > 1 ? 's' : ''}`,
     roi: 'ROI',
@@ -272,6 +273,7 @@ const TEXT = {
     allTimePeriod: 'depuis le début',
     apiCost: 'Coût équivalent API',
     replies: 'réponses',
+    costLine: (cost: string, tokens: string, replies: string) => `${cost} pour ${tokens} tokens et ${replies} réponses`,
     planMonth: (price: string) => `Abonnement ${price} / mois`,
     planTotal: (paid: string, months: number) => `Abonnement ${paid} sur ${months} mois`,
     roi: 'rentabilisé',
@@ -363,8 +365,8 @@ function viewOf(cache: Cache, month: string, tab: Tab): View {
   }
 }
 
-// Number formats. en: $75.40 · $1,568 · 75.6M · 2.74B · 45% · x3.9
-//                 fr: 75,40 $ · 1 568 $ · 75,6 M · 2,74 Md · 45 % · x3,9
+// Number formats. en: $75.40, $1,568, 75.6M, 2.74B, 45%, x3.9
+//                 fr: 75,40 $, 1 568 $, 75,6 M, 2,74 Md, 45 %, x3,9
 function groupThousands(value: number) {
   const separator = lang === 'fr' ? ' ' : ','
   return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, separator)
@@ -448,10 +450,10 @@ function subscriptionOf(view: View, tab: Tab, month: string, planPriceUsd: numbe
 
 function textReport(view: View, subscription: Subscription | undefined) {
   const lines = [
-    `token-maxxing · ${t().apiCost} · ${view.period}`,
-    `${usd(view.cost)}  ·  ${tokenCount(view.tokens)} tokens  ·  ${groupThousands(view.replies)} ${t().replies}`,
+    `token-maxxing: ${t().apiCost}, ${view.period}`,
+    t().costLine(usd(view.cost), tokenCount(view.tokens), groupThousands(view.replies)),
   ]
-  if (subscription) lines.push(`${subscription.label} · ${t().roi} ${times(subscription.ratio)}`)
+  if (subscription) lines.push(`${subscription.label}, ${t().roi} ${times(subscription.ratio)}`)
   lines.push('')
   const width = Math.max(8, ...view.models.map(line => shortModel(line.model).length))
   for (const line of view.models) {
@@ -583,7 +585,7 @@ export const register: Register = (on, rawOptions) => {
           {tabs}
           <Text>{textReport(view, subscription)}</Text>
           {flex}
-          <Text dimColor>{t().localSessions()} · {sinceLastScan(now)}</Text>
+          <Text dimColor>{t().localSessions()}, {sinceLastScan(now)}</Text>
         </Box>
       )
     }
@@ -599,10 +601,10 @@ export const register: Register = (on, rawOptions) => {
         </Box>
 
         <Box flexDirection="column" gap="xs">
-          <Text size="caption" dimColor>{t().apiCost} · {view.period}</Text>
+          <Text size="caption" dimColor>{t().apiCost}, {view.period}</Text>
           <Text size="title" weight="bold" tabular>{usd(view.cost)}</Text>
           <Text size="caption" dimColor tabular>
-            {tokenCount(view.tokens)} tokens · {groupThousands(view.replies)} {t().replies}
+            {tokenCount(view.tokens)} tokens, {groupThousands(view.replies)} {t().replies}
           </Text>
         </Box>
 
@@ -639,7 +641,7 @@ export const register: Register = (on, rawOptions) => {
               </Box>
               <Svg source={shareBarSvg(width, line.share, familyColor(line.model))} alt={`${percent(line.share)} ${t().ofCost}`} width={width} height={4} />
               <Text size="footnote" dimColor tabular>
-                {tokenCount(line.tokens)} tokens · {percent(line.share)}
+                {tokenCount(line.tokens)} tokens, {percent(line.share)}
               </Text>
             </Box>
           ))}
@@ -647,7 +649,7 @@ export const register: Register = (on, rawOptions) => {
 
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
           <Text size="footnote" dimColor>
-            {t().localSessions(view.since)} · {sinceLastScan(now)}
+            {t().localSessions(view.since)}, {sinceLastScan(now)}
           </Text>
           <Button key="close" label={t().close} role="dismiss" plain dimColor onPress={() => closePane($)} />
         </Box>

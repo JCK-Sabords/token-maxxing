@@ -12,7 +12,7 @@
   <rect width="1280" height="400" rx="28" fill="url(#bg)"/>
   <rect width="1280" height="400" rx="28" fill="url(#glow)"/>
 
-  <text x="64" y="82" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="26" fill="#8b949e">token-maxxing <tspan fill="#6e7681">· a Claude Code mod</tspan></text>
+  <text x="64" y="82" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="26" fill="#8b949e">token-maxxing<tspan fill="#6e7681">, a Claude Code mod</tspan></text>
 
   <text x="64" y="196" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="700" fill="#e6edf3">You paid $140.</text>
   <text x="64" y="280" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="700" fill="#ff7b72">You burned $1,576.</text>

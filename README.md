@@ -92,9 +92,9 @@ Tell it what you pay, so it can tell you how hard you're winning:
 - No UI? `claude -p "/tokens"` prints the receipts right in your terminal:
 
 ```
-token-maxxing · API-equivalent cost · all time
-$1,576  ·  2.77B tokens  ·  11,641 replies
-Subscription $140 over 7 months · ROI x11.3
+token-maxxing: API-equivalent cost, all time
+$1,576 for 2.77B tokens and 11,641 replies
+Subscription $140 over 7 months, ROI x11.3
 
 opus-5      ███████░░░░░       $884     1.00B
 opus-5-5    ███░░░░░░░░░       $332    793.7M
@@ -111,7 +111,9 @@ Numbers in a terminal are cute. Numbers on your LinkedIn profile picture are a l
 2. Add a photo, or just type your GitHub username.
 3. Pick a style (Open to ROI, Gold flex, Terminal), download, upload it everywhere, watch recruiters get confused.
 
-Your photo never leaves your browser: the frame is drawn on your machine. The free version carries a tiny "made with token-maxxing" mark. In marketing, we call that a feature.
+Your ring says **Claude ROI-maxxer ~ x11.3**. Recruiters will have questions.
+
+Your photo never leaves your browser: the frame is drawn on your machine. The free version signs the end of the ring with a tiny "token-maxxing". In marketing, we call that a feature.
 
 ## How the math works (for the nerds)
 

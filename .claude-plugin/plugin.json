@@ -1,6 +1,6 @@
 {
   "name": "token-maxxing",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Looksmaxxing is over. See your Claude Code tokens per model, this month and all time, what they'd have cost on the API (BYOK), and your subscription ROI.",
   "author": {
     "name": "JCK"
