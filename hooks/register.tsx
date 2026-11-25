@@ -263,6 +263,7 @@ const TEXT = {
     command: 'token-maxxing: tokens and API-equivalent cost per model, this month and all time',
     chartAlt: 'API-equivalent cost per month',
     noClaudeDir: 'could not find the ~/.claude folder',
+    flex: 'Flex it on your profile pic ↗',
   },
   fr: {
     months: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
@@ -288,6 +289,7 @@ const TEXT = {
     command: 'token-maxxing : tokens et coût équivalent API par modèle, ce mois et depuis le début',
     chartAlt: 'Coût équivalent API par mois',
     noClaudeDir: 'dossier ~/.claude introuvable',
+    flex: 'Afficher sur ta photo de profil ↗',
   },
 }
 const t = () => TEXT[lang]
@@ -458,6 +460,31 @@ function textReport(view: View, subscription: Subscription | undefined) {
   return lines.join('\n')
 }
 
+// ----- the flex page -----
+
+const FLEX_URL = 'https://jck-sabords.github.io/token-maxxing/flex/'
+
+// FNV-1a, the same as the flex page: it catches typos and casual edits, it is not a proof.
+function checksum(text: string) {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+  return hash.toString(16).padStart(8, '0')
+}
+
+// The page reads the score after the #, which the browser never sends to a server.
+function flexUrl(view: View, tab: Tab, month: string, subscription: Subscription | undefined) {
+  const roi = subscription ? subscription.ratio.toFixed(1) : ''
+  const tokens = String(Math.round(view.tokens))
+  const cost = String(Math.round(view.cost))
+  const since = tab === 'all' ? (view.months[0]?.month ?? '') : month
+  const c = checksum(`${roi}|${tokens}|${cost}|${tab}|${since}|token-maxxing`)
+  const params = new URLSearchParams({ roi, tokens, cost, period: tab, since, lang, c })
+  return `${FLEX_URL}#${params.toString()}`
+}
+
 // ----- the pane -----
 
 async function openPane($: EngineInterface, isAsked: boolean) {
@@ -525,7 +552,7 @@ export const register: Register = (on, rawOptions) => {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     await read($, revisionAtom)
     const tab = await read($, tabAtom)
-    const { Box, Text, Button } = $.ui.resolve(e)
+    const { Box, Text, Button, Link } = $.ui.resolve(e)
     const now = await $.clock.now()
 
     if (!stats || Object.keys(stats.buckets).length === 0) {
@@ -542,6 +569,7 @@ export const register: Register = (on, rawOptions) => {
     const month = new Date(now).toISOString().slice(0, 7)
     const view = viewOf(stats, month, tab)
     const subscription = subscriptionOf(view, tab, month, planPriceUsd)
+    const flex = <Link key="flex" href={flexUrl(view, tab, month, subscription)} label={t().flex} />
     const tabs = (
       <Box key="tabs" flexDirection="row" gap="xs">
         <Button key="tab-month" label={t().thisMonth} variant={tab === 'month' ? 'primary' : 'secondary'} onPress={() => selectTab($, 'month')} />
@@ -554,6 +582,7 @@ export const register: Register = (on, rawOptions) => {
         <Box flexDirection="column" gap={1}>
           {tabs}
           <Text>{textReport(view, subscription)}</Text>
+          {flex}
           <Text dimColor>{t().localSessions()} · {sinceLastScan(now)}</Text>
         </Box>
       )
@@ -585,6 +614,10 @@ export const register: Register = (on, rawOptions) => {
             </Text>
           </Box>
         )}
+
+        <Box flexDirection="row" justifyContent="flex-end">
+          {flex}
+        </Box>
 
         {tab === 'all' && view.months.length > 1 && (
           <Box flexDirection="column" gap="xs">

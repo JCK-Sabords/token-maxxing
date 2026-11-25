@@ -55,6 +55,9 @@ test('the pane shows this month, then all time, at API prices', { options: { pla
   expect(await ui.find({ type: 'Text', text: /^Subscription \$20\.00\/month$/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /^ROI x0\.1$/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /^sonnet-5$/ })).toBeUndefined()
+  // The Flex link opens the page with the score after the #, signed with the page's checksum.
+  const flex = JSON.stringify(await ui.find({ type: 'Link' }))
+  expect(flex).toMatch(/jck-sabords\.github\.io\/token-maxxing\/flex\/#roi=0\.1&tokens=1101000&cost=2&period=month&since=2026-11&lang=en&c=[0-9a-f]{8}/)
 
   await ui.press({ key: 'tab-all' })
   // All time adds sonnet-5 = 1M*2*2 (1h cache write) + 1M*10 = $14

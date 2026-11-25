@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>token-maxxing · Flex your ROI</title>
+<meta name="description" content="Turn your token-maxxing score into a profile picture frame. Your photo never leaves your browser.">
+<meta property="og:title" content="token-maxxing · Flex your ROI">
+<meta property="og:description" content="Looksmaxxing is over. Put your subscription ROI on your profile picture.">
+<meta property="og:image" content="https://jck-sabords.github.io/token-maxxing/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0d1117;
+    --panel: #161b22;
+    --line: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --green: #3fb950;
+    --red: #ff7b72;
+    --accent: #7c8cff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 600px at 85% 10%, rgba(63, 185, 80, 0.12), transparent 60%), var(--bg);
+    color: var(--text);
+    font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .brand { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--muted); text-decoration: none; }
+  .brand b { color: var(--text); }
+  .lang button { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+  .lang button.on { color: var(--text); border-color: var(--muted); }
+  h1 { font-size: clamp(36px, 7vw, 64px); line-height: 1.05; margin: 40px 0 8px; letter-spacing: -0.02em; }
+  h1 em { font-style: normal; color: var(--green); }
+  .sub { color: var(--muted); font-size: 18px; margin: 0 0 32px; max-width: 620px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 40px; align-items: start; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; gap: 28px; } }
+  .preview { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .circle { width: min(340px, 82vw); aspect-ratio: 1; border-radius: 50%; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); background: var(--panel); position: relative; }
+  .circle canvas { width: 100%; height: 100%; display: block; }
+  .circle.drop { outline: 3px dashed var(--accent); outline-offset: 6px; }
+  .styles { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .chip { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 999px; padding: 6px 14px; cursor: pointer; font: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }
+  .chip i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .chip.on { border-color: var(--text); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .step { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
+  .score { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .score .big { font-size: 40px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; }
+  .score .meta { color: var(--muted); }
+  .muted { color: var(--muted); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .or { color: var(--muted); font-size: 14px; margin: 10px 0; }
+  input[type="text"] { flex: 1; min-width: 160px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; }
+  .btn { border: 0; border-radius: 10px; padding: 11px 16px; font: inherit; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+  .btn.primary { background: var(--green); color: #04130a; }
+  .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .file { position: relative; overflow: hidden; }
+  .file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .note { font-size: 14px; color: var(--muted); margin-top: 10px; }
+  .error { color: var(--red); font-size: 14px; margin-top: 8px; min-height: 1em; }
+  .thanks { color: var(--green); font-weight: 600; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; }
+  footer { margin-top: 40px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="https://github.com/JCK-Sabords/token-maxxing">JCK-Sabords/<b>token-maxxing</b></a>
+    <div class="lang"><button data-lang="en">EN</button> <button data-lang="fr">FR</button></div>
+  </header>
+
+  <h1 data-i18n-html="title"></h1>
+  <p class="sub" data-i18n="subtitle"></p>
+
+  <div class="grid">
+    <div class="preview">
+      <div class="circle" id="circle"><canvas id="canvas" width="1024" height="1024"></canvas></div>
+      <div class="styles" id="styles"></div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="step" data-i18n="scoreStep"></div>
+        <div id="scoreOk" hidden>
+          <div class="score"><span class="big" id="scoreBig"></span><span class="meta" id="scoreMeta"></span></div>
+        </div>
+        <div id="scoreMissing" hidden>
+          <p style="margin:0 0 8px" data-i18n="noScore"></p>
+          <code>/plugin install token-maxxing --marketplace JCK-Sabords/token-maxxing</code>
+          <p class="note" data-i18n="noScoreHow"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="step" data-i18n="photoStep"></div>
+        <div class="row">
+          <label class="btn ghost file"><span data-i18n="upload"></span><input type="file" id="file" accept="image/*"></label>
+          <span class="muted" data-i18n="dropHint"></span>
+        </div>
+        <div class="or" data-i18n="or"></div>
+        <div class="row">
+          <input type="text" id="gh" data-i18n-placeholder="ghPlaceholder" autocomplete="off" spellcheck="false">
+          <button class="btn ghost" id="ghBtn" data-i18n="ghUse"></button>
+        </div>
+        <div class="error" id="photoError"></div>
+        <p class="note" data-i18n="privacy"></p>
+      </div>
+
+      <div class="card">
+        <div class="step" data-i18n="downloadStep"></div>
+        <p class="thanks" id="thanks" hidden data-i18n="thanks"></p>
+        <div class="row">
+          <button class="btn primary" id="download" disabled></button>
+          <button class="btn ghost" id="pay" hidden></button>
+        </div>
+        <p class="note" id="downloadNote"></p>
+      </div>
+    </div>
+  </div>
+
+  <footer data-i18n="footer"></footer>
+</div>
+
+<script>
+// ----- settings -----
+// Stripe Payment Link for the watermark-free version. Empty: the paid option is hidden.
+// In Stripe, set "After payment" to redirect to https://jck-sabords.github.io/token-maxxing/flex/?paid={CHECKOUT_SESSION_ID}
+const PAYMENT_LINK = ''
+const PRICE = { en: '€0.99', fr: '0,99 €' }
+
+const TEXT = {
+  en: {
+    title: 'Flex your <em>ROI</em>.',
+    subtitle: 'Turn your token-maxxing score into a profile picture frame for LinkedIn, Instagram or X. Your photo never leaves your browser.',
+    scoreStep: '1 · Your score',
+    noScore: 'No score loaded. Open this page from the token-maxxing pane: install the mod, open it with /tokens, then press "Flex it". Meanwhile, here is a demo.',
+    noScoreHow: 'The score is computed by the mod on your machine. This page only reads it from the link.',
+    roiLabel: 'subscription ROI',
+    tokensLabel: 'tokens',
+    allTime: 'all time',
+    since: 'since',
+    photoStep: '2 · Your photo',
+    upload: 'Upload a photo',
+    dropHint: 'or drop it on the circle',
+    or: 'or use your GitHub avatar:',
+    ghPlaceholder: 'GitHub username',
+    ghUse: 'Use',
+    ghError: 'Could not load this GitHub avatar. Check the username, or upload a photo.',
+    fileError: 'Could not read this image. Try a JPG or PNG.',
+    privacy: '🔒 The frame is drawn in your browser. Nothing is uploaded anywhere.',
+    downloadStep: '3 · Download',
+    downloadFree: 'Download (free, with watermark)',
+    downloadHd: 'Download HD',
+    removeWatermark: (price) => `Remove the watermark · ${price}`,
+    needPhoto: 'Add a photo first.',
+    needScore: 'Load your score from the mod to download your frame.',
+    freeNote: 'The free version carries a small "made with token-maxxing" mark. Consider it free advertising for your flex.',
+    paidNote: 'Payment is handled by Stripe. You come back here right after, with your frame ready.',
+    thanks: 'Thank you, legend. Your frame is watermark-free.',
+    styleGreen: 'Open to ROI',
+    styleGold: 'Gold flex',
+    styleTerminal: 'Terminal',
+    watermark: 'made with token-maxxing',
+    footer: 'Made for fun. The score is computed by the token-maxxing mod on the user\'s own machine and is not verified by anyone. Not affiliated with Anthropic.',
+  },
+  fr: {
+    title: 'Affiche ton <em>ROI</em>.',
+    subtitle: 'Transforme ton score token-maxxing en cadre de photo de profil pour LinkedIn, Instagram ou X. Ta photo ne quitte jamais ton navigateur.',
+    scoreStep: '1 · Ton score',
+    noScore: 'Aucun score chargé. Ouvre cette page depuis le panneau token-maxxing : installe le mod, ouvre-le avec /tokens, puis clique sur « Flex ». En attendant, voici une démo.',
+    noScoreHow: 'Le score est calculé par le mod sur ta machine. Cette page se contente de le lire dans le lien.',
+    roiLabel: 'abonnement rentabilisé',
+    tokensLabel: 'tokens',
+    allTime: 'depuis le début',
+    since: 'depuis',
+    photoStep: '2 · Ta photo',
+    upload: 'Choisir une photo',
+    dropHint: 'ou dépose-la sur le cercle',
+    or: 'ou utilise ton avatar GitHub :',
+    ghPlaceholder: 'Pseudo GitHub',
+    ghUse: 'Utiliser',
+    ghError: 'Impossible de charger cet avatar GitHub. Vérifie le pseudo, ou choisis une photo.',
+    fileError: 'Impossible de lire cette image. Essaie un JPG ou un PNG.',
+    privacy: '🔒 Le cadre est dessiné dans ton navigateur. Rien n\'est envoyé nulle part.',
+    downloadStep: '3 · Télécharger',
+    downloadFree: 'Télécharger (gratuit, avec filigrane)',
+    downloadHd: 'Télécharger en HD',
+    removeWatermark: (price) => `Retirer le filigrane · ${price}`,
+    needPhoto: 'Ajoute d\'abord une photo.',
+    needScore: 'Charge ton score depuis le mod pour télécharger ton cadre.',
+    freeNote: 'La version gratuite porte une petite mention « made with token-maxxing ». Vois ça comme de la pub gratuite pour ton flex.',
+    paidNote: 'Le paiement passe par Stripe. Tu reviens ici juste après, avec ton cadre prêt.',
+    thanks: 'Merci, légende. Ton cadre est sans filigrane.',
+    styleGreen: 'Open to ROI',
+    styleGold: 'Flex doré',
+    styleTerminal: 'Terminal',
+    watermark: 'made with token-maxxing',
+    footer: 'Fait pour rire. Le score est calculé par le mod token-maxxing sur la machine de l\'utilisateur et n\'est vérifié par personne. Sans lien avec Anthropic.',
+  },
+}
+
+const STYLES = {
+  green: { band: '#2f9e44', text: '#ffffff', font: '800 64px ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif', dot: '#2f9e44' },
+  gold: { band: '#e3b341', text: '#1b1f24', font: '800 64px ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif', dot: '#e3b341' },
+  terminal: { band: '#0d1117', text: '#3fb950', font: '700 58px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', dot: '#0d1117' },
+}
+
+const DEMO_SCORE = { roi: 11.3, tokens: 2770000000, cost: 1576, period: 'all', since: '2026-05' }
+
+// ----- state -----
+const state = {
+  lang: 'en',
+  score: null,
+  isDemo: false,
+  photo: null,
+  style: 'green',
+  isUnlocked: false,
+}
+
+const el = (id) => document.getElementById(id)
+const canvas = el('canvas')
+const ctx = canvas.getContext('2d')
+const SIZE = 1024
+const t = () => TEXT[state.lang]
+
+function store(key, value) {
+  try { value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value) } catch (e) { /* private mode */ }
+}
+function recall(key) {
+  try { return localStorage.getItem(key) } catch (e) { return null }
+}
+
+// ----- the score, read from the link the mod opens -----
+// Same checksum as the mod (FNV-1a). It catches typos and casual edits, it is not a proof.
+function checksum(text) {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+  return hash.toString(16).padStart(8, '0')
+}
+
+function readScore(hash) {
+  const p = new URLSearchParams(hash.replace(/^#/, ''))
+  const roi = p.get('roi') || ''
+  const tokens = p.get('tokens') || ''
+  const cost = p.get('cost') || ''
+  const period = p.get('period') || ''
+  const since = p.get('since') || ''
+  if (!tokens || checksum(`${roi}|${tokens}|${cost}|${period}|${since}|token-maxxing`) !== (p.get('c') || '')) return null
+  return { roi: roi ? Number(roi) : null, tokens: Number(tokens), cost: Number(cost), period, since }
+}
+
+// ----- number formats -----
+function decimal(value, digits) {
+  const text = value.toFixed(digits)
+  return state.lang === 'fr' ? text.replace('.', ',') : text
+}
+function tokenCount(count) {
+  const space = state.lang === 'fr' ? ' ' : ''
+  if (count >= 1e9) return `${decimal(count / 1e9, 2)}${space}${state.lang === 'fr' ? 'Md' : 'B'}`
+  if (count >= 1e6) return `${decimal(count / 1e6, 1)}${space}M`
+  if (count >= 1e3) return `${Math.round(count / 1e3)}${space}k`
+  return String(count)
+}
+function monthLabel(month) {
+  const [year, index] = month.split('-').map(Number)
+  if (!year || !index) return month
+  return new Date(Date.UTC(year, index - 1, 1)).toLocaleDateString(state.lang === 'fr' ? 'fr-FR' : 'en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })
+}
+function frameText(score) {
+  return score.roi !== null ? `#ROIMAXXING · x${decimal(score.roi, 1)}` : `#TOKENMAXXING · ${tokenCount(score.tokens)}`
+}
+
+// ----- drawing -----
+const rad = (deg) => (deg * Math.PI) / 180
+
+function drawCover(context, image, size) {
+  const iw = image.naturalWidth || image.width
+  const ih = image.naturalHeight || image.height
+  const scale = Math.max(size / iw, size / ih)
+  const w = iw * scale
+  const h = ih * scale
+  context.drawImage(image, (size - w) / 2, (size - h) / 2, w, h)
+}
+
+function drawPlaceholder() {
+  const g = ctx.createLinearGradient(0, 0, SIZE, SIZE)
+  g.addColorStop(0, '#2a3038')
+  g.addColorStop(1, '#1a1f26')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, SIZE, SIZE)
+  ctx.fillStyle = '#3d4550'
+  ctx.beginPath()
+  ctx.arc(SIZE / 2, SIZE * 0.4, SIZE * 0.17, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.ellipse(SIZE / 2, SIZE * 0.95, SIZE * 0.33, SIZE * 0.3, 0, Math.PI, 0)
+  ctx.fill()
+}
+
+// A color with its alpha multiplied: '#2f9e44' or 'rgba(13, 17, 23, 0.6)'.
+function withAlpha(color, alpha) {
+  if (color.startsWith('#')) {
+    const n = parseInt(color.slice(1), 16)
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
+  }
+  const [r, g, b, a = 1] = color.match(/[\d.]+/g).map(Number)
+  return `rgba(${r}, ${g}, ${b}, ${a * alpha})`
+}
+
+// An arc band whose ends fade out smoothly, like the #OpenToWork frame.
+function drawBand(cx, cy, r, width, from, to, color) {
+  const fade = 18
+  ctx.lineWidth = width
+  ctx.lineCap = 'butt'
+  if (ctx.createConicGradient) {
+    const gradient = ctx.createConicGradient(rad(from), cx, cy)
+    const span = to - from
+    gradient.addColorStop(0, withAlpha(color, 0))
+    gradient.addColorStop(fade / 360, withAlpha(color, 1))
+    gradient.addColorStop((span - fade) / 360, withAlpha(color, 1))
+    gradient.addColorStop(span / 360, withAlpha(color, 0))
+    gradient.addColorStop(1, withAlpha(color, 0))
+    ctx.strokeStyle = gradient
+  } else {
+    ctx.strokeStyle = color
+  }
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, rad(from), rad(to))
+  ctx.stroke()
+}
+
+// Text along the bottom of the circle, read left to right, letter tops toward the center.
+function drawBottomText(text, cx, cy, r, midDeg, font, color, spacing) {
+  ctx.font = font
+  ctx.fillStyle = color
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  const chars = [...text]
+  const widths = chars.map((ch) => ctx.measureText(ch).width + spacing)
+  const total = widths.reduce((a, b) => a + b, 0) - spacing
+  let angle = rad(midDeg) + total / r / 2
+  chars.forEach((ch, i) => {
+    const a = angle - (widths[i] - spacing) / 2 / r
+    ctx.save()
+    ctx.translate(cx + r * Math.cos(a), cy + r * Math.sin(a))
+    ctx.rotate(a - Math.PI / 2)
+    ctx.fillText(ch, 0, 0)
+    ctx.restore()
+    angle -= widths[i] / r
+  })
+}
+
+// Text along the top of the circle, read left to right.
+function drawTopText(text, cx, cy, r, midDeg, font, color, spacing) {
+  ctx.font = font
+  ctx.fillStyle = color
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  const chars = [...text]
+  const widths = chars.map((ch) => ctx.measureText(ch).width + spacing)
+  const total = widths.reduce((a, b) => a + b, 0) - spacing
+  let angle = rad(midDeg) - total / r / 2
+  chars.forEach((ch, i) => {
+    const a = angle + (widths[i] - spacing) / 2 / r
+    ctx.save()
+    ctx.translate(cx + r * Math.cos(a), cy + r * Math.sin(a))
+    ctx.rotate(a + Math.PI / 2)
+    ctx.fillText(ch, 0, 0)
+    ctx.restore()
+    angle += widths[i] / r
+  })
+}
+
+function draw() {
+  const score = state.score || DEMO_SCORE
+  const style = STYLES[state.style]
+  const c = SIZE / 2
+  ctx.clearRect(0, 0, SIZE, SIZE)
+  if (state.photo) drawCover(ctx, state.photo, SIZE)
+  else drawPlaceholder()
+
+  const band = 112
+  const r = c - 8 - band / 2
+  drawBand(c, c, r, band, 18, 218, style.band)
+  drawBottomText(frameText(score), c, c, r, 118, style.font, style.text, 3)
+
+  if (!state.isUnlocked) {
+    const wr = c - 8 - 24
+    drawBand(c, c, wr, 48, 236, 304, 'rgba(13, 17, 23, 0.62)')
+    drawTopText(t().watermark, c, c, wr, 270, '600 26px ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif', 'rgba(255, 255, 255, 0.92)', 1)
+  }
+
+  if (state.isDemo) {
+    ctx.save()
+    ctx.translate(c, c)
+    ctx.rotate(rad(-24))
+    ctx.font = '900 190px ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)'
+    ctx.fillText('DEMO', 0, 0)
+    ctx.restore()
+  }
+}
+
+// ----- interface -----
+function renderStyles() {
+  const box = el('styles')
+  box.innerHTML = ''
+  const names = { green: t().styleGreen, gold: t().styleGold, terminal: t().styleTerminal }
+  for (const key of Object.keys(STYLES)) {
+    const b = document.createElement('button')
+    b.className = 'chip' + (state.style === key ? ' on' : '')
+    b.innerHTML = `<i style="background:${STYLES[key].dot};border:1px solid #8b949e55"></i>`
+    b.append(names[key])
+    b.onclick = () => { state.style = key; store('tmx-style', key); renderStyles(); draw() }
+    box.append(b)
+  }
+}
+
+function renderText() {
+  document.documentElement.lang = state.lang
+  document.querySelectorAll('[data-i18n]').forEach((node) => { node.textContent = t()[node.dataset.i18n] })
+  document.querySelectorAll('[data-i18n-html]').forEach((node) => { node.innerHTML = t()[node.dataset.i18nHtml] })
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => { node.placeholder = t()[node.dataset.i18nPlaceholder] })
+  document.querySelectorAll('.lang button').forEach((b) => b.classList.toggle('on', b.dataset.lang === state.lang))
+
+  el('scoreOk').hidden = !state.score
+  el('scoreMissing').hidden = !!state.score
+  if (state.score) {
+    const s = state.score
+    el('scoreBig').textContent = s.roi !== null ? `x${decimal(s.roi, 1)}` : tokenCount(s.tokens)
+    const period = s.period === 'all' ? (s.since ? `${t().since} ${monthLabel(s.since)}` : t().allTime) : monthLabel(s.since || '')
+    el('scoreMeta').textContent = s.roi !== null ? `${t().roiLabel} · ${tokenCount(s.tokens)} ${t().tokensLabel} · ${period}` : `${t().tokensLabel} · ${period}`
+  }
+
+  const download = el('download')
+  const pay = el('pay')
+  download.textContent = state.isUnlocked ? t().downloadHd : t().downloadFree
+  download.disabled = !state.photo || !state.score
+  pay.hidden = !PAYMENT_LINK || state.isUnlocked || !state.score
+  pay.textContent = t().removeWatermark(PRICE[state.lang])
+  pay.disabled = !state.photo
+  el('thanks').hidden = !state.isUnlocked
+  el('downloadNote').textContent = !state.score ? t().needScore : !state.photo ? t().needPhoto : state.isUnlocked ? '' : PAYMENT_LINK ? `${t().freeNote} ${t().paidNote}` : t().freeNote
+  renderStyles()
+}
+
+function setPhoto(image) {
+  state.photo = image
+  el('photoError').textContent = ''
+  renderText()
+  draw()
+}
+
+function loadImage(src, crossOrigin) {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    if (crossOrigin) image.crossOrigin = 'anonymous'
+    image.onload = () => resolve(image)
+    image.onerror = reject
+    image.src = src
+  })
+}
+
+el('file').addEventListener('change', async (event) => {
+  const file = event.target.files && event.target.files[0]
+  if (!file) return
+  try { setPhoto(await loadImage(URL.createObjectURL(file))) } catch (e) { el('photoError').textContent = t().fileError }
+})
+
+const circle = el('circle')
+circle.addEventListener('dragover', (event) => { event.preventDefault(); circle.classList.add('drop') })
+circle.addEventListener('dragleave', () => circle.classList.remove('drop'))
+circle.addEventListener('drop', async (event) => {
+  event.preventDefault()
+  circle.classList.remove('drop')
+  const file = event.dataTransfer.files && event.dataTransfer.files[0]
+  if (!file) return
+  try { setPhoto(await loadImage(URL.createObjectURL(file))) } catch (e) { el('photoError').textContent = t().fileError }
+})
+
+async function useGitHub() {
+  const user = el('gh').value.trim().replace(/^@/, '')
+  if (!/^[A-Za-z0-9-]{1,39}$/.test(user)) { el('photoError').textContent = t().ghError; return }
+  try {
+    const response = await fetch(`https://api.github.com/users/${encodeURIComponent(user)}`)
+    if (!response.ok) throw new Error(String(response.status))
+    const { avatar_url: avatar } = await response.json()
+    const url = new URL(avatar)
+    url.searchParams.set('s', '1024')
+    setPhoto(await loadImage(url.toString(), true))
+  } catch (e) {
+    el('photoError').textContent = t().ghError
+  }
+}
+el('ghBtn').addEventListener('click', useGitHub)
+el('gh').addEventListener('keydown', (event) => { if (event.key === 'Enter') useGitHub() })
+
+el('download').addEventListener('click', () => {
+  canvas.toBlob((blob) => {
+    if (!blob) return
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = state.isUnlocked ? 'roi-maxxer.png' : 'roi-maxxer-free.png'
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+  }, 'image/png')
+})
+
+// Before paying, keep the photo and score: Stripe sends the person back to a fixed address.
+el('pay').addEventListener('click', () => {
+  try {
+    const keep = document.createElement('canvas')
+    keep.width = SIZE
+    keep.height = SIZE
+    drawCover(keep.getContext('2d'), state.photo, SIZE)
+    store('tmx-photo', keep.toDataURL('image/jpeg', 0.92))
+  } catch (e) { /* a photo the browser will not export stays behind */ }
+  store('tmx-hash', location.hash)
+  store('tmx-style', state.style)
+  location.href = PAYMENT_LINK
+})
+
+document.querySelectorAll('.lang button').forEach((b) => {
+  b.addEventListener('click', () => { state.lang = b.dataset.lang; store('tmx-lang', state.lang); renderText(); draw() })
+})
+
+// ----- start -----
+async function start() {
+  const query = new URLSearchParams(location.search)
+  const paid = query.get('paid') || ''
+  let hash = location.hash
+  if (paid.startsWith('cs_')) {
+    store('tmx-unlocked', '1')
+    hash = hash || recall('tmx-hash') || ''
+    history.replaceState(null, '', location.pathname + hash)
+  }
+  const fromLink = new URLSearchParams(hash.replace(/^#/, '')).get('lang')
+  const saved = recall('tmx-lang')
+  const isKnown = (lang) => lang === 'fr' || lang === 'en'
+  const browser = (navigator.language || '').toLowerCase().startsWith('fr') ? 'fr' : 'en'
+  state.lang = isKnown(fromLink) ? fromLink : isKnown(saved) ? saved : browser
+  state.score = readScore(hash)
+  state.isDemo = !state.score
+  state.style = STYLES[recall('tmx-style')] ? recall('tmx-style') : 'green'
+  state.isUnlocked = recall('tmx-unlocked') === '1'
+  if (paid.startsWith('cs_')) {
+    const kept = recall('tmx-photo')
+    if (kept) { try { state.photo = await loadImage(kept) } catch (e) { /* ask for the photo again */ } }
+    store('tmx-photo', null)
+  }
+  renderText()
+  draw()
+}
+start()
+</script>
+</body>
+</html>

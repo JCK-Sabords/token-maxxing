@@ -47,6 +47,7 @@ Somewhere in San Francisco, a CFO just whispered my name with hatred. 😭
 - 💸 **The API bill you dodged**, at public API prices, cache writes and reads included
 - 🟢 **Your ROI**: green when you're farming, red when you're getting played
 - 📈 **A monthly chart**, because number go up is the only cardio we do
+- 🖼️ **A profile picture frame** with your ROI on it, #OpenToWork style, but for people who actually work
 - ⚡ **Fast**: only new lines are read, after each Claude reply
 - 🔒 **100% local**: reads files already on your disk and sends nothing anywhere (unlike your dignity)
 
@@ -102,6 +103,16 @@ sonnet-5-5  ░░░░░░░░░░░░     $49.05    179.4M
 opus-4-8    ░░░░░░░░░░░░     $32.64     28.8M
 ```
 
+## Flex it 🗿
+
+Numbers in a terminal are cute. Numbers on your LinkedIn profile picture are a lifestyle.
+
+1. Press **Flex it on your profile pic** in the pane. It opens [the flex page](https://jck-sabords.github.io/token-maxxing/flex/) with your score already loaded.
+2. Add a photo, or just type your GitHub username.
+3. Pick a style (Open to ROI, Gold flex, Terminal), download, upload it everywhere, watch recruiters get confused.
+
+Your photo never leaves your browser: the frame is drawn on your machine. The free version carries a tiny "made with token-maxxing" mark. In marketing, we call that a feature.
+
 ## How the math works (for the nerds)
 
 - **Source**: Claude Code's local transcripts (`~/.claude/projects/**/*.jsonl`). Cloud sessions and claude.ai chats leave nothing on your disk, so they don't count. Sorry, your best work happened off the books.
@@ -136,3 +147,5 @@ If this made you feel something (shame, mostly), drop a ⭐ and post your ratio.
 ## License
 
 MIT. Do whatever you want. Just post your ratio.
+
+token-maxxing is a fan project. Not affiliated with Anthropic, who would probably prefer you didn't know these numbers.
