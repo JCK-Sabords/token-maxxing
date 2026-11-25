@@ -239,7 +239,7 @@ const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'aoû
 const ACCENT = '#7c8cff'
 const MUTED = '#8b949e'
 const GOOD = '#3fb950'
-const WARN = '#d29922'
+const BAD = '#f85149'
 const FAMILY_COLORS: [RegExp, string][] = [
   [/opus/, '#a78bfa'],
   [/sonnet/, '#f0883e'],
@@ -337,14 +337,6 @@ function shareBarSvg(width: number, share: number, color: string) {
 
 function dotSvg(color: string) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="${color}"/></svg>`
-}
-
-// The fill is this month's API cost, the tick is the subscription price.
-function gaugeSvg(width: number, ratio: number) {
-  const scale = Math.max(2, Math.ceil(ratio * 1.15))
-  const filled = Math.round(width * Math.min(1, ratio / scale))
-  const tick = Math.round(width / scale)
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="10" viewBox="0 0 ${width} 10"><rect y="2" width="${width}" height="6" rx="3" fill="${MUTED}" fill-opacity="0.18"/><rect y="2" width="${filled}" height="6" rx="3" fill="${ratio >= 1 ? GOOD : WARN}"/><rect x="${tick - 1}" width="2" height="10" rx="1" fill="${MUTED}"/></svg>`
 }
 
 function monthChartSvg(width: number, months: MonthBar[], current: string) {
@@ -523,14 +515,11 @@ export const register: Register = (on, rawOptions) => {
         </Box>
 
         {subscription && (
-          <Box flexDirection="column" gap="xs">
-            <Box flexDirection="row" justifyContent="space-between">
-              <Text size="caption" dimColor tabular>{subscription.label}</Text>
-              <Text size="caption" weight="semibold" color={subscription.ratio >= 1 ? GOOD : WARN} tabular>
-                rentabilisé {times(subscription.ratio)}
-              </Text>
-            </Box>
-            <Svg source={gaugeSvg(width, subscription.ratio)} alt={`Rentabilisé ${times(subscription.ratio)}`} width={width} height={10} />
+          <Box flexDirection="row" justifyContent="space-between">
+            <Text size="caption" dimColor tabular>{subscription.label}</Text>
+            <Text size="caption" weight="semibold" color={subscription.ratio >= 1 ? GOOD : BAD} tabular>
+              rentabilisé {times(subscription.ratio)}
+            </Text>
           </Box>
         )}
 
