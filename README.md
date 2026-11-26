@@ -17,6 +17,13 @@
   <img src="https://img.shields.io/badge/Anthropic's%20CFO-crying-f85149" alt="Anthropic's CFO: crying">
 </p>
 
+<p align="center">
+  <img src="assets/pane-all-time.png" alt="token-maxxing pane, All time tab: $1,630 API-equivalent cost, ROI x11.6, monthly chart, cost per model" width="330">
+  &nbsp;&nbsp;
+  <img src="assets/pane-this-month.png" alt="token-maxxing pane, This month tab: $137 API-equivalent cost, ROI x6.9, cost per model" width="323">
+  <br><sub>The real pane in the Claude desktop app (French UI): all time on the left, this month on the right.</sub>
+</p>
+
 **token-maxxing** is a tokenmaxxing tracker: a free, open source Claude Code mod (plugin) that shows your Claude Code token usage per model, this month and all time, what that usage would have cost on the Anthropic API (BYOK), and how many times your Claude subscription paid for itself. Website: [jck-sabords.github.io/token-maxxing](https://jck-sabords.github.io/token-maxxing/).
 
 ---
