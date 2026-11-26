@@ -2,6 +2,8 @@
 
 > token-maxxing is a free, open source (MIT) Claude Code mod that shows Claude Code token usage per model, this month and all time, the API-equivalent cost of that usage at Anthropic's public prices (what it would cost with your own API key, BYOK), and the return on a Claude subscription ("ROI": API-equivalent cost divided by what the user paid).
 
+Also known as a tokenmaxxing tracker: tokenmaxxing is the trend of burning as many AI tokens as possible.
+
 It answers questions like "how many tokens do I use in Claude Code?", "how much would my Claude Code usage cost on the API?" and "is my Claude subscription worth it?".
 
 ## Install

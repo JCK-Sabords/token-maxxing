@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/Anthropic's%20CFO-crying-f85149" alt="Anthropic's CFO: crying">
 </p>
 
-**token-maxxing** is a free, open source Claude Code mod (plugin) that shows your Claude Code token usage per model, this month and all time, what that usage would have cost on the Anthropic API (BYOK), and how many times your Claude subscription paid for itself. Website: [jck-sabords.github.io/token-maxxing](https://jck-sabords.github.io/token-maxxing/).
+**token-maxxing** is a tokenmaxxing tracker: a free, open source Claude Code mod (plugin) that shows your Claude Code token usage per model, this month and all time, what that usage would have cost on the Anthropic API (BYOK), and how many times your Claude subscription paid for itself. Website: [jck-sabords.github.io/token-maxxing](https://jck-sabords.github.io/token-maxxing/).
 
 ---
 

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>token-maxxing: Claude Code token usage and API cost tracker</title>
-<meta name="description" content="token-maxxing is a free, open source Claude Code mod that shows your token usage per model, what it would have cost on the Anthropic API (BYOK), and how many times your Claude subscription paid for itself.">
+<title>token-maxxing: the tokenmaxxing tracker for Claude Code (usage and API cost)</title>
+<meta name="description" content="Tokenmaxxing, measured. token-maxxing is a free, open source Claude Code mod that shows your token usage per model, what it would have cost on the Anthropic API (BYOK), and how many times your Claude subscription paid for itself.">
 <link rel="canonical" href="https://jck-sabords.github.io/token-maxxing/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://jck-sabords.github.io/token-maxxing/">
@@ -18,7 +18,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "token-maxxing",
-  "alternateName": "token-maxxing Claude Code mod",
+  "alternateName": ["tokenmaxxing", "token-maxxing Claude Code mod"],
   "description": "A Claude Code mod (plugin) that shows token usage per model, this month and all time, the API-equivalent cost (BYOK) at Anthropic's public prices, and the return on a Claude subscription.",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Windows, macOS, Linux",
@@ -137,6 +137,7 @@
     <details><summary>Does it send my data anywhere?</summary><p>No. It reads your Claude Code transcripts, keeps a small cache in ~/.claude/token-maxxing/cache.json, and may run printenv to find your home folder. It makes no network calls and never touches your account.</p></details>
     <details><summary>Why do my numbers look low?</summary><p>Only local sessions count: cloud sessions and claude.ai chats leave no transcript on your disk. Or you're just not maxxing hard enough.</p></details>
     <details><summary>Does it work in the Claude desktop app and VS Code?</summary><p>Yes. It works in the Claude Code CLI, the Code tab of the desktop app and the VS Code extension (Claude Code v2.1.287 or later, v2.1.286 in the desktop app).</p></details>
+    <details><summary>What is tokenmaxxing?</summary><p>Tokenmaxxing is burning as many AI tokens as possible, sometimes to look productive (Amazon told its engineers to stop in November 2026). token-maxxing turns it into a scoreboard: how many tokens you burn in Claude Code, what they would cost on the API, and whether your subscription pays off.</p></details>
     <details><summary>Is it free?</summary><p>The mod is free and open source (MIT). The profile picture frame is free with a small signature, or 0.99 EUR in HD without it.</p></details>
   </section>
 
