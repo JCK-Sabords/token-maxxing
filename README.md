@@ -93,7 +93,8 @@ Tell it what you pay, so it can tell you how hard you're winning:
 | --- | --- | --- |
 | `planPriceUsd` | `0` | Your plan price per month (20, 100, 200...). Shows your ROI this month and all time. `0` hides it. |
 | `openOnNewSession` | `true` | Opens the pane when a new session starts. |
-| `language` | `en` | `en` or `fr`. Oui, on parle français. |
+
+The pane speaks 7 languages: English (default), Français, Deutsch, Հայերէն, العربية, Español and Português. Pick yours at the very bottom of the pane, it sticks across sessions.
 
 ## Usage
 

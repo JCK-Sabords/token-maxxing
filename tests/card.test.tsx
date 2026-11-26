@@ -73,15 +73,36 @@ test('the pane shows this month, then all time, at API prices', { options: { pla
   await ui.unmount()
 })
 
-test('language: fr draws the pane in French', { options: { planPriceUsd: 20, language: 'fr' } } as never, async ($, on) => {
+test('the language picker at the bottom switches the pane and keeps the pick', { options: { planPriceUsd: 20 } } as never, async ($, on) => {
   engine(on, ['desktop'])
+  const stored: Record<string, unknown> = {}
+  on('store.set', (_: unknown, e: { key: string; value: unknown }) => {
+    stored[e.key] = e.value
+    return { value: undefined }
+  })
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   await $.command.run({ command: 'tokens', args: '' } as never)
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' } as never)
+  // English by default
+  expect(await ui.find({ type: 'Button', text: /^This month$/ })).toBeDefined()
+  await ui.select({ key: 'lang', value: 'fr' })
   expect(await ui.find({ type: 'Text', text: /^2,20 \$$/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /^Abonnement 20,00 \$ \/ mois$/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /^rentabilisé x0,1$/ })).toBeDefined()
+  expect(stored.language).toBe('fr')
+  await ui.select({ key: 'lang', value: 'de' })
+  expect(await ui.find({ type: 'Button', text: /^Dieser Monat$/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('a language picked in an earlier session is used at start', async ($, on) => {
+  engine(on, ['desktop'])
+  on('store.get', (_: unknown, e: { key: string }) => ({ value: e.key === 'language' ? 'es' : undefined }))
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  await $.command.run({ command: 'tokens', args: '' } as never)
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' } as never)
+  expect(await ui.find({ type: 'Button', text: /^Este mes$/ })).toBeDefined()
   await ui.unmount()
 })
 

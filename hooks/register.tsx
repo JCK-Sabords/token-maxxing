@@ -1,12 +1,14 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { Tab } from '../types'
+import type { Lang, Tab } from '../types'
 
 // Bumped after each scan so the cards redraw.
 const revisionAtom = atom({ plugin: 'token-maxxing', key: 'revision' } as const, 0)
 // Which period the pane shows.
 const tabAtom = atom({ plugin: 'token-maxxing', key: 'tab' } as const, 'month' as Tab)
+// The pane's language, picked at its bottom and kept in $.store under 'language'.
+const langAtom = atom({ plugin: 'token-maxxing', key: 'lang' } as const, 'en' as Lang)
 
 // API prices in $ per million tokens (Anthropic first-party rates, Nov. 2026).
 // Cache writes: 1.25x input for the 5-minute TTL, 2x for the 1-hour TTL.
@@ -234,38 +236,80 @@ function refresh($: EngineInterface) {
 
 const PANE = 'token-maxxing'
 
-// The pane speaks English by default; `language: fr` in the options switches it to French.
-type Lang = 'en' | 'fr'
+// The pane speaks English until the person picks another language at its bottom; the pick is kept in $.store.
+const LANGS: { value: Lang; label: string }[] = [
+  { value: 'en', label: 'English' },
+  { value: 'fr', label: 'Français' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'hy', label: 'Հայերէն' },
+  { value: 'ar', label: 'العربية' },
+  { value: 'es', label: 'Español' },
+  { value: 'pt', label: 'Português' },
+]
+const isLang = (value: unknown): value is Lang => LANGS.some(option => option.value === value)
 let lang: Lang = 'en'
 
-const TEXT = {
+type Strings = {
+  months: string[]
+  thisMonth: string
+  allTime: string
+  allTimePeriod: string
+  apiCost: string
+  tokens: string
+  replies: string
+  costLine: (cost: string, tokens: string, replies: string) => string
+  planMonth: (price: string) => string
+  planTotal: (paid: string, months: number) => string
+  roi: string
+  byMonth: string
+  byModel: string
+  ofCost: string
+  localSessions: (since?: string) => string
+  neverUpdated: string
+  justUpdated: string
+  updatedAgo: (minutes: number) => string
+  close: string
+  reading: string
+  cannotRead: (error: string) => string
+  paneWaits: (reason: string) => string
+  command: string
+  chartAlt: string
+  noClaudeDir: string
+  flex: string
+  wrapped: (year: string) => string
+  language: string
+}
+
+const TEXT: Record<Lang, Strings> = {
   en: {
     months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     thisMonth: 'This month',
     allTime: 'All time',
     allTimePeriod: 'all time',
     apiCost: 'API-equivalent cost',
+    tokens: 'tokens',
     replies: 'replies',
-    costLine: (cost: string, tokens: string, replies: string) => `${cost} for ${tokens} tokens and ${replies} replies`,
-    planMonth: (price: string) => `Subscription ${price}/month`,
-    planTotal: (paid: string, months: number) => `Subscription ${paid} over ${months} month${months > 1 ? 's' : ''}`,
+    costLine: (cost, tokens, replies) => `${cost} for ${tokens} tokens and ${replies} replies`,
+    planMonth: price => `Subscription ${price}/month`,
+    planTotal: (paid, months) => `Subscription ${paid} over ${months} month${months > 1 ? 's' : ''}`,
     roi: 'ROI',
     byMonth: 'By month',
     byModel: 'By model',
     ofCost: 'of the cost',
-    localSessions: (since?: string) => `Local sessions${since ? ` since ${since}` : ''}`,
+    localSessions: since => `Local sessions${since ? ` since ${since}` : ''}`,
     neverUpdated: 'never updated',
     justUpdated: 'updated just now',
-    updatedAgo: (minutes: number) => `updated ${minutes} min ago`,
+    updatedAgo: minutes => `updated ${minutes} min ago`,
     close: 'Close',
     reading: 'Reading your session history…',
-    cannotRead: (error: string) => `Could not read your history: ${error}`,
-    paneWaits: (reason: string) => `token-maxxing: pane waiting (${reason})`,
+    cannotRead: error => `Could not read your history: ${error}`,
+    paneWaits: reason => `token-maxxing: pane waiting (${reason})`,
     command: 'token-maxxing: tokens and API-equivalent cost per model, this month and all time',
     chartAlt: 'API-equivalent cost per month',
     noClaudeDir: 'could not find the ~/.claude folder',
     flex: 'Flex it on your profile pic ↗',
-    wrapped: (year: string) => `Your ${year} Wrapped ↗`,
+    wrapped: year => `Your ${year} Wrapped ↗`,
+    language: 'Language',
   },
   fr: {
     months: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
@@ -273,30 +317,201 @@ const TEXT = {
     allTime: 'Total',
     allTimePeriod: 'depuis le début',
     apiCost: 'Coût équivalent API',
+    tokens: 'tokens',
     replies: 'réponses',
-    costLine: (cost: string, tokens: string, replies: string) => `${cost} pour ${tokens} tokens et ${replies} réponses`,
-    planMonth: (price: string) => `Abonnement ${price} / mois`,
-    planTotal: (paid: string, months: number) => `Abonnement ${paid} sur ${months} mois`,
+    costLine: (cost, tokens, replies) => `${cost} pour ${tokens} tokens et ${replies} réponses`,
+    planMonth: price => `Abonnement ${price} / mois`,
+    planTotal: (paid, months) => `Abonnement ${paid} sur ${months} mois`,
     roi: 'rentabilisé',
     byMonth: 'Par mois',
     byModel: 'Par modèle',
     ofCost: 'du coût',
-    localSessions: (since?: string) => `Sessions locales${since ? ` depuis ${since}` : ''}`,
+    localSessions: since => `Sessions locales${since ? ` depuis ${since}` : ''}`,
     neverUpdated: 'jamais mis à jour',
     justUpdated: "mis à jour à l'instant",
-    updatedAgo: (minutes: number) => `mis à jour il y a ${minutes} min`,
+    updatedAgo: minutes => `mis à jour il y a ${minutes} min`,
     close: 'Fermer',
     reading: "Lecture de l'historique des sessions…",
-    cannotRead: (error: string) => `Lecture impossible : ${error}`,
-    paneWaits: (reason: string) => `token-maxxing : panneau en attente (${reason})`,
+    cannotRead: error => `Lecture impossible : ${error}`,
+    paneWaits: reason => `token-maxxing : panneau en attente (${reason})`,
     command: 'token-maxxing : tokens et coût équivalent API par modèle, ce mois et depuis le début',
     chartAlt: 'Coût équivalent API par mois',
     noClaudeDir: 'dossier ~/.claude introuvable',
     flex: 'Afficher sur ta photo de profil ↗',
-    wrapped: (year: string) => `Ton Wrapped ${year} ↗`,
+    wrapped: year => `Ton Wrapped ${year} ↗`,
+    language: 'Langue',
+  },
+  de: {
+    months: ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'],
+    thisMonth: 'Dieser Monat',
+    allTime: 'Gesamt',
+    allTimePeriod: 'seit Beginn',
+    apiCost: 'API-äquivalente Kosten',
+    tokens: 'Tokens',
+    replies: 'Antworten',
+    costLine: (cost, tokens, replies) => `${cost} für ${tokens} Tokens und ${replies} Antworten`,
+    planMonth: price => `Abo ${price}/Monat`,
+    planTotal: (paid, months) => `Abo ${paid} über ${months} Monat${months > 1 ? 'e' : ''}`,
+    roi: 'ROI',
+    byMonth: 'Pro Monat',
+    byModel: 'Pro Modell',
+    ofCost: 'der Kosten',
+    localSessions: since => `Lokale Sitzungen${since ? ` seit ${since}` : ''}`,
+    neverUpdated: 'nie aktualisiert',
+    justUpdated: 'gerade aktualisiert',
+    updatedAgo: minutes => `vor ${minutes} Min. aktualisiert`,
+    close: 'Schließen',
+    reading: 'Sitzungsverlauf wird gelesen…',
+    cannotRead: error => `Verlauf nicht lesbar: ${error}`,
+    paneWaits: reason => `token-maxxing: Bereich wartet (${reason})`,
+    command: 'token-maxxing: Tokens und API-äquivalente Kosten pro Modell, diesen Monat und insgesamt',
+    chartAlt: 'API-äquivalente Kosten pro Monat',
+    noClaudeDir: 'Ordner ~/.claude nicht gefunden',
+    flex: 'Auf deinem Profilbild zeigen ↗',
+    wrapped: year => `Dein Wrapped ${year} ↗`,
+    language: 'Sprache',
+  },
+  hy: {
+    months: ['Յունուար', 'Փետրուար', 'Մարտ', 'Ապրիլ', 'Մայիս', 'Յունիս', 'Յուլիս', 'Օգոստոս', 'Սեպտեմբեր', 'Հոկտեմբեր', 'Նոյեմբեր', 'Դեկտեմբեր'],
+    thisMonth: 'Այս ամիս',
+    allTime: 'Ընդհանուր',
+    allTimePeriod: 'սկիզբէն ի վեր',
+    apiCost: 'API-ի համարժէք արժէք',
+    tokens: 'token',
+    replies: 'պատասխան',
+    costLine: (cost, tokens, replies) => `${cost}՝ ${tokens} token եւ ${replies} պատասխանի համար`,
+    planMonth: price => `Բաժանորդագրութիւն ${price} / ամիս`,
+    planTotal: (paid, months) => `Բաժանորդագրութիւն ${paid}՝ ${months} ամսուան համար`,
+    roi: 'ROI',
+    byMonth: 'Ըստ ամիսի',
+    byModel: 'Ըստ մոդելի',
+    ofCost: 'արժէքէն',
+    localSessions: since => `Տեղական նիստեր${since ? `, սկսեալ ${since}` : ''}`,
+    neverUpdated: 'տակաւին չէ թարմացուած',
+    justUpdated: 'քիչ առաջ թարմացուեցաւ',
+    updatedAgo: minutes => `թարմացուեցաւ ${minutes} րոպէ առաջ`,
+    close: 'Գոցել',
+    reading: 'Նիստերու պատմութիւնը կը կարդացուի…',
+    cannotRead: error => `Կարելի չեղաւ կարդալ պատմութիւնը՝ ${error}`,
+    paneWaits: reason => `token-maxxing՝ վահանակը կը սպասէ (${reason})`,
+    command: 'token-maxxing՝ token-ներ եւ API-ի համարժէք արժէք ըստ մոդելի, այս ամիս եւ սկիզբէն ի վեր',
+    chartAlt: 'API-ի համարժէք արժէք ըստ ամիսի',
+    noClaudeDir: '~/.claude թղթապանակը չգտնուեցաւ',
+    flex: 'Ցուցադրէ պրոֆիլի նկարիդ վրայ ↗',
+    wrapped: year => `Քու ${year}-ի Wrapped-ը ↗`,
+    language: 'Լեզու',
+  },
+  ar: {
+    months: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
+    thisMonth: 'هذا الشهر',
+    allTime: 'الإجمالي',
+    allTimePeriod: 'منذ البداية',
+    apiCost: 'التكلفة المكافئة عبر API',
+    tokens: 'توكن',
+    replies: 'رد',
+    costLine: (cost, tokens, replies) => `${cost} مقابل ${tokens} توكن و${replies} رد`,
+    planMonth: price => `الاشتراك ${price} شهريًا`,
+    planTotal: (paid, months) => `الاشتراك ${paid} خلال ${arabicMonths(months)}`,
+    roi: 'العائد',
+    byMonth: 'حسب الشهر',
+    byModel: 'حسب النموذج',
+    ofCost: 'من التكلفة',
+    localSessions: since => `جلسات محلية${since ? ` منذ ${since}` : ''}`,
+    neverUpdated: 'لم يُحدَّث بعد',
+    justUpdated: 'حُدِّث للتو',
+    updatedAgo: minutes => `حُدِّث قبل ${minutes} دقيقة`,
+    close: 'إغلاق',
+    reading: 'جارٍ قراءة سجل الجلسات…',
+    cannotRead: error => `تعذّرت قراءة السجل: ${error}`,
+    paneWaits: reason => `token-maxxing: اللوحة في الانتظار (${reason})`,
+    command: 'token-maxxing: التوكنات والتكلفة المكافئة عبر API لكل نموذج، هذا الشهر ومنذ البداية',
+    chartAlt: 'التكلفة المكافئة عبر API شهريًا',
+    noClaudeDir: 'تعذّر العثور على المجلد ~/.claude',
+    flex: 'اعرضها على صورة ملفك الشخصي ↗',
+    wrapped: year => `ملخّصك لعام ${year} ↗`,
+    language: 'اللغة',
+  },
+  es: {
+    months: ['ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.', 'jul.', 'ago.', 'sept.', 'oct.', 'nov.', 'dic.'],
+    thisMonth: 'Este mes',
+    allTime: 'Total',
+    allTimePeriod: 'desde el principio',
+    apiCost: 'Coste equivalente en API',
+    tokens: 'tokens',
+    replies: 'respuestas',
+    costLine: (cost, tokens, replies) => `${cost} por ${tokens} tokens y ${replies} respuestas`,
+    planMonth: price => `Suscripción ${price}/mes`,
+    planTotal: (paid, months) => `Suscripción ${paid} en ${months} mes${months > 1 ? 'es' : ''}`,
+    roi: 'ROI',
+    byMonth: 'Por mes',
+    byModel: 'Por modelo',
+    ofCost: 'del coste',
+    localSessions: since => `Sesiones locales${since ? ` desde ${since}` : ''}`,
+    neverUpdated: 'nunca actualizado',
+    justUpdated: 'actualizado ahora mismo',
+    updatedAgo: minutes => `actualizado hace ${minutes} min`,
+    close: 'Cerrar',
+    reading: 'Leyendo tu historial de sesiones…',
+    cannotRead: error => `No se pudo leer tu historial: ${error}`,
+    paneWaits: reason => `token-maxxing: panel en espera (${reason})`,
+    command: 'token-maxxing: tokens y coste equivalente en API por modelo, este mes y desde el principio',
+    chartAlt: 'Coste equivalente en API por mes',
+    noClaudeDir: 'no se encontró la carpeta ~/.claude',
+    flex: 'Presúmelo en tu foto de perfil ↗',
+    wrapped: year => `Tu Wrapped ${year} ↗`,
+    language: 'Idioma',
+  },
+  pt: {
+    months: ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'],
+    thisMonth: 'Este mês',
+    allTime: 'Total',
+    allTimePeriod: 'desde o início',
+    apiCost: 'Custo equivalente na API',
+    tokens: 'tokens',
+    replies: 'respostas',
+    costLine: (cost, tokens, replies) => `${cost} por ${tokens} tokens e ${replies} respostas`,
+    planMonth: price => `Assinatura ${price}/mês`,
+    planTotal: (paid, months) => `Assinatura ${paid} em ${months} ${months > 1 ? 'meses' : 'mês'}`,
+    roi: 'ROI',
+    byMonth: 'Por mês',
+    byModel: 'Por modelo',
+    ofCost: 'do custo',
+    localSessions: since => `Sessões locais${since ? ` desde ${since}` : ''}`,
+    neverUpdated: 'nunca atualizado',
+    justUpdated: 'atualizado agora',
+    updatedAgo: minutes => `atualizado há ${minutes} min`,
+    close: 'Fechar',
+    reading: 'Lendo seu histórico de sessões…',
+    cannotRead: error => `Não foi possível ler seu histórico: ${error}`,
+    paneWaits: reason => `token-maxxing: painel aguardando (${reason})`,
+    command: 'token-maxxing: tokens e custo equivalente na API por modelo, este mês e desde o início',
+    chartAlt: 'Custo equivalente na API por mês',
+    noClaudeDir: 'pasta ~/.claude não encontrada',
+    flex: 'Ostente na sua foto de perfil ↗',
+    wrapped: year => `Seu Wrapped ${year} ↗`,
+    language: 'Idioma',
   },
 }
 const t = () => TEXT[lang]
+
+// Arabic counts months as: 1 شهر واحد, 2 شهرين, 3 to 10 أشهر, 11 and more شهرًا.
+function arabicMonths(months: number) {
+  if (months === 1) return 'شهر واحد'
+  if (months === 2) return 'شهرين'
+  return months <= 10 ? `${months} أشهر` : `${months} شهرًا`
+}
+
+// How each language writes numbers: thousands and decimal marks, where the $ goes, unit words.
+type NumberStyle = { thousands: string; decimal: string; dollarFirst: boolean; space: string; k: string; m: string; b: string }
+const NUMBERS: Record<Lang, NumberStyle> = {
+  en: { thousands: ',', decimal: '.', dollarFirst: true, space: '', k: 'k', m: 'M', b: 'B' },
+  fr: { thousands: ' ', decimal: ',', dollarFirst: false, space: ' ', k: 'k', m: 'M', b: 'Md' },
+  de: { thousands: '.', decimal: ',', dollarFirst: false, space: ' ', k: 'Tsd.', m: 'Mio.', b: 'Mrd.' },
+  hy: { thousands: ' ', decimal: ',', dollarFirst: false, space: ' ', k: 'հզր', m: 'մլն', b: 'մլրդ' },
+  ar: { thousands: ',', decimal: '.', dollarFirst: false, space: ' ', k: 'ألف', m: 'مليون', b: 'مليار' },
+  es: { thousands: '.', decimal: ',', dollarFirst: false, space: ' ', k: 'mil', m: 'M', b: 'mil M' },
+  pt: { thousands: '.', decimal: ',', dollarFirst: false, space: ' ', k: 'mil', m: 'mi', b: 'bi' },
+}
 
 // One accent for the whole pane, and one hue per model family.
 const ACCENT = '#7c8cff'
@@ -367,28 +582,26 @@ function viewOf(cache: Cache, month: string, tab: Tab): View {
   }
 }
 
-// Number formats. en: $75.40, $1,568, 75.6M, 2.74B, 45%, x3.9
-//                 fr: 75,40 $, 1 568 $, 75,6 M, 2,74 Md, 45 %, x3,9
+// Number formats follow NUMBERS[lang]: en $75.40, $1,568, 75.6M, 2.74B, 45%; fr 75,40 $, 1 568 $, 75,6 M, 2,74 Md, 45 %
+const style = () => NUMBERS[lang]
 function groupThousands(value: number) {
-  const separator = lang === 'fr' ? ' ' : ','
-  return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, separator)
+  return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, style().thousands)
 }
 function decimal(value: number, digits: number) {
-  const text = value.toFixed(digits)
-  return lang === 'fr' ? text.replace('.', ',') : text
+  return value.toFixed(digits).replace('.', style().decimal)
 }
 function usd(value: number) {
   const amount = value >= 100 ? groupThousands(value) : decimal(value, 2)
-  return lang === 'fr' ? `${amount} $` : `$${amount}`
+  return style().dollarFirst ? `$${amount}` : `${amount} $`
 }
 function tokenCount(count: number) {
-  const space = lang === 'fr' ? ' ' : ''
-  if (count >= 1e9) return `${decimal(count / 1e9, 2)}${space}${lang === 'fr' ? 'Md' : 'B'}`
-  if (count >= 1e6) return `${decimal(count / 1e6, 1)}${space}M`
-  if (count >= 1e3) return `${Math.round(count / 1e3)}${space}k`
+  const { space, k, m, b } = style()
+  if (count >= 1e9) return `${decimal(count / 1e9, 2)}${space}${b}`
+  if (count >= 1e6) return `${decimal(count / 1e6, 1)}${space}${m}`
+  if (count >= 1e3) return `${Math.round(count / 1e3)}${space}${k}`
   return `${count}`
 }
-const percent = (share: number) => `${Math.round(share * 100)}${lang === 'fr' ? ' ' : ''}%`
+const percent = (share: number) => `${Math.round(share * 100)}${style().space}%`
 const shortModel = (model: string) => model.replace(/^claude-/, '')
 const times = (ratio: number) => `x${decimal(ratio, 1)}`
 
@@ -549,15 +762,26 @@ async function selectTab($: EngineInterface, tab: Tab) {
   await update($, tabAtom, () => tab)
 }
 
+async function selectLang($: EngineInterface, value: string) {
+  if (!isLang(value)) return
+  lang = value
+  await $.store.set('language', value)
+  await update($, langAtom, () => value)
+}
+
 export const register: Register = (on, rawOptions) => {
   const raw = (rawOptions ?? {}) as Record<string, unknown>
   // Values saved from /plugin configure can arrive as text.
   const planPriceUsd = Number(raw.planPriceUsd) || 0
   const openOnNewSession = String(raw.openOnNewSession ?? 'true') !== 'false'
-  lang = String(raw.language ?? 'en').trim().toLowerCase().startsWith('fr') ? 'fr' : 'en'
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)
+    const saved = await $.store.get('language').catch(() => undefined)
+    if (isLang(saved)) {
+      lang = saved
+      await update($, langAtom, () => saved)
+    }
     await $.command.register({ name: 'tokens', description: t().command, immediate: true })
     void refresh($)
     const usage = await $.session.usage().catch(() => undefined)
@@ -597,7 +821,8 @@ export const register: Register = (on, rawOptions) => {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     await read($, revisionAtom)
     const tab = await read($, tabAtom)
-    const { Box, Text, Button, Link } = $.ui.resolve(e)
+    lang = await read($, langAtom)
+    const { Box, Text, Button, Link, Select } = $.ui.resolve(e)
     const now = await $.clock.now()
 
     if (!stats || Object.keys(stats.buckets).length === 0) {
@@ -623,6 +848,10 @@ export const register: Register = (on, rawOptions) => {
       </Box>
     )
 
+    const picker = (
+      <Select key="lang" label={t().language} options={LANGS} value={lang} onSelect={value => selectLang($, value)} />
+    )
+
     if (e.surface === 'terminal') {
       return (
         <Box flexDirection="column" gap={1}>
@@ -631,6 +860,7 @@ export const register: Register = (on, rawOptions) => {
           {flex}
           {wrapped}
           <Text dimColor>{t().localSessions()}, {sinceLastScan(now)}</Text>
+          {picker}
         </Box>
       )
     }
@@ -649,7 +879,7 @@ export const register: Register = (on, rawOptions) => {
           <Text size="caption" dimColor>{t().apiCost}, {view.period}</Text>
           <Text size="title" weight="bold" tabular>{usd(view.cost)}</Text>
           <Text size="caption" dimColor tabular>
-            {tokenCount(view.tokens)} tokens, {groupThousands(view.replies)} {t().replies}
+            {tokenCount(view.tokens)} {t().tokens}, {groupThousands(view.replies)} {t().replies}
           </Text>
         </Box>
 
@@ -687,7 +917,7 @@ export const register: Register = (on, rawOptions) => {
               </Box>
               <Svg source={shareBarSvg(width, line.share, familyColor(line.model))} alt={`${percent(line.share)} ${t().ofCost}`} width={width} height={4} />
               <Text size="footnote" dimColor tabular>
-                {tokenCount(line.tokens)} tokens, {percent(line.share)}
+                {tokenCount(line.tokens)} {t().tokens}, {percent(line.share)}
               </Text>
             </Box>
           ))}
@@ -699,6 +929,8 @@ export const register: Register = (on, rawOptions) => {
           </Text>
           <Button key="close" label={t().close} role="dismiss" plain dimColor onPress={() => closePane($)} />
         </Box>
+
+        {picker}
       </Box>
     )
   })
