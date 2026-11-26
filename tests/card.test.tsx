@@ -56,7 +56,10 @@ test('the pane shows this month, then all time, at API prices', { options: { pla
   expect(await ui.find({ type: 'Text', text: /^ROI x0\.1$/ })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: /^sonnet-5$/ })).toBeUndefined()
   // The Flex link opens the page with the score after the #, signed with the page's checksum.
-  const flex = JSON.stringify(await ui.find({ type: 'Link' }))
+  // The Wrapped link carries the year so far: Oct. (sonnet-5, $14) and Nov. (opus-5-5, $2.20).
+  const wrapped = JSON.stringify(await ui.find({ type: 'Link', text: /Wrapped/ }))
+  expect(wrapped).toMatch(/token-maxxing\/wrapped\/#year=2026&tokens=3101000&cost=16&replies=2&roi=0\.4&paid=40&top=sonnet-5&topShare=86&recMonth=2026-10&recCost=14&months=2&lang=en&c=02ec4b6f/)
+  const flex = JSON.stringify(await ui.find({ type: 'Link', text: /Flex/ }))
   expect(flex).toMatch(/jck-sabords\.github\.io\/token-maxxing\/flex\/#roi=0\.1&tokens=1101000&cost=2&period=month&since=2026-11&lang=en&c=[0-9a-f]{8}/)
 
   await ui.press({ key: 'tab-all' })

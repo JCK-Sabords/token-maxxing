@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code Wrapped: your year in tokens</title>
+<meta name="description" content="Your year in Claude Code: tokens burned, what it would have cost on the API, your main model and your subscription ROI, as a card to share. Made with token-maxxing.">
+<meta property="og:title" content="Claude Code Wrapped: your year in tokens">
+<meta property="og:description" content="Tokens burned, API bill dodged, subscription ROI. Your year in Claude Code, as a card to share.">
+<meta property="og:image" content="https://jck-sabords.github.io/token-maxxing/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../icon.png">
+<style>
+  :root { color-scheme: dark; --bg: #0d1117; --panel: #161b22; --line: #30363d; --text: #e6edf3; --muted: #8b949e; --green: #3fb950; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(1200px 600px at 85% 0%, rgba(124, 140, 255, 0.14), transparent 60%), var(--bg); color: var(--text); font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  a { color: inherit; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .brand { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--muted); text-decoration: none; }
+  .brand b { color: var(--text); }
+  .lang button { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+  .lang button.on { color: var(--text); border-color: var(--muted); }
+  h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.05; margin: 36px 0 8px; letter-spacing: -0.02em; }
+  h1 em { font-style: normal; color: #7c8cff; white-space: nowrap; }
+  .sub { color: var(--muted); font-size: 18px; margin: 0 0 28px; max-width: 640px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 36px; align-items: start; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  canvas { width: 100%; height: auto; border-radius: 18px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); display: block; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .btn { border: 0; border-radius: 10px; padding: 12px 18px; font: inherit; font-weight: 700; cursor: pointer; background: var(--green); color: #04130a; width: 100%; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .note { color: var(--muted); font-size: 14px; margin: 10px 0 0; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; }
+  footer { margin-top: 40px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="../">JCK-Sabords/<b>token-maxxing</b></a>
+    <div class="lang"><button data-lang="en">EN</button> <button data-lang="fr">FR</button></div>
+  </header>
+  <h1 id="title"></h1>
+  <p class="sub" id="subtitle"></p>
+  <div class="grid">
+    <div><canvas id="canvas" width="1080" height="1350"></canvas></div>
+    <div>
+      <div class="card" id="missing" hidden>
+        <p style="margin:0 0 8px" id="missingText"></p>
+        <code>/plugin install token-maxxing --marketplace JCK-Sabords/token-maxxing</code>
+      </div>
+      <div class="card">
+        <button class="btn" id="download"></button>
+        <p class="note" id="shareNote"></p>
+      </div>
+      <p class="note" id="privacy"></p>
+    </div>
+  </div>
+  <footer id="footer"></footer>
+</div>
+
+<script>
+const TEXT = {
+  en: {
+    title: 'Your year in <em>Claude Code</em>.',
+    subtitle: 'Tokens burned, the API bill you dodged, your main model and your subscription ROI. One card, made to be shared.',
+    missing: 'No data loaded. Open this page from the token-maxxing pane ("Your Wrapped" link, All time tab). Meanwhile, here is a demo.',
+    download: 'Download my Wrapped',
+    shareNote: 'Post it on LinkedIn, Instagram or X. The 4:5 format fits the feed.',
+    privacy: '🔒 Your numbers come from the link and the card is drawn in your browser. Nothing is uploaded.',
+    footer: 'Made for fun with token-maxxing. The numbers are computed by the mod on the user\'s own machine and are not verified by anyone. Not affiliated with Anthropic.',
+    youBurned: 'You burned',
+    tokens: 'tokens',
+    atApi: (cost) => `That's ${cost} at API prices`,
+    paid: (paid, roi) => [`for ${paid} paid. ROI `, roi],
+    mainModel: 'Main character',
+    recordMonth: 'Record month',
+    replies: 'Replies',
+    months: 'Months maxxing',
+    tiers: ['Gym membership enjoyer', 'Casual maxxer', 'Certified token-maxxer', "Anthropic CFO's worst nightmare"],
+    demo: 'DEMO',
+    months12: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  },
+  fr: {
+    title: 'Ton année dans <em>Claude Code</em>.',
+    subtitle: 'Les tokens cramés, la facture API évitée, ton modèle préféré et le rendement de ton abonnement. Une carte, faite pour être partagée.',
+    missing: 'Aucune donnée chargée. Ouvre cette page depuis le panneau token-maxxing (lien « Ton Wrapped », onglet Total). En attendant, voici une démo.',
+    download: 'Télécharger mon Wrapped',
+    shareNote: 'Poste-le sur LinkedIn, Instagram ou X. Le format 4:5 est fait pour le fil.',
+    privacy: '🔒 Tes chiffres viennent du lien et la carte est dessinée dans ton navigateur. Rien n\'est envoyé.',
+    footer: 'Fait pour rire avec token-maxxing. Les chiffres sont calculés par le mod sur la machine de l\'utilisateur et ne sont vérifiés par personne. Sans lien avec Anthropic.',
+    youBurned: 'Tu as cramé',
+    tokens: 'tokens',
+    atApi: (cost) => `Soit ${cost} au prix de l'API`,
+    paid: (paid, roi) => [`pour ${paid} payés. Rentabilisé `, roi],
+    mainModel: 'Modèle préféré',
+    recordMonth: 'Mois record',
+    replies: 'Réponses',
+    months: 'Mois de maxxing',
+    tiers: ['Abonné salle de sport', 'Maxxer du dimanche', 'Token-maxxer certifié', "Le pire cauchemar du CFO d'Anthropic"],
+    demo: 'DÉMO',
+    months12: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+  },
+}
+
+const DEMO = { year: '2026', tokens: 2770000000, cost: 1576, replies: 11641, roi: 11.3, paid: 140, top: 'opus-5', topShare: 56, recMonth: '2026-08', recCost: 412, months: 7 }
+const state = { lang: 'en', data: null }
+const el = (id) => document.getElementById(id)
+const t = () => TEXT[state.lang]
+const canvas = el('canvas')
+const ctx = canvas.getContext('2d')
+const W = 1080
+const H = 1350
+const SANS = 'ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif'
+const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
+
+function store(key, value) { try { localStorage.setItem(key, value) } catch (e) { /* private mode */ } }
+function recall(key) { try { return localStorage.getItem(key) } catch (e) { return null } }
+
+// Same checksum as the mod (FNV-1a): it catches typos and casual edits, it is not a proof.
+function checksum(text) {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+  return hash.toString(16).padStart(8, '0')
+}
+
+const FIELDS = ['year', 'tokens', 'cost', 'replies', 'roi', 'paid', 'top', 'topShare', 'recMonth', 'recCost', 'months']
+function readData(hash) {
+  const p = new URLSearchParams(hash.replace(/^#/, ''))
+  const raw = FIELDS.map((f) => p.get(f) || '')
+  if (!raw[1] || checksum(`${raw.join('|')}|token-maxxing-wrapped`) !== (p.get('c') || '')) return null
+  const [year, tokens, cost, replies, roi, paid, top, topShare, recMonth, recCost, months] = raw
+  return { year, tokens: +tokens, cost: +cost, replies: +replies, roi: roi ? +roi : null, paid: paid ? +paid : null, top, topShare: +topShare, recMonth, recCost: +recCost, months: +months }
+}
+
+// Number formats, as in the mod.
+function decimal(v, d) { const s = v.toFixed(d); return state.lang === 'fr' ? s.replace('.', ',') : s }
+function group(v) { return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, state.lang === 'fr' ? ' ' : ',') }
+function usd(v) { const a = v >= 100 ? group(v) : decimal(v, 2); return state.lang === 'fr' ? `${a} $` : `$${a}` }
+function tokenCount(n) {
+  const sp = state.lang === 'fr' ? ' ' : ''
+  if (n >= 1e9) return `${decimal(n / 1e9, 2)}${sp}${state.lang === 'fr' ? 'Md' : 'B'}`
+  if (n >= 1e6) return `${decimal(n / 1e6, 1)}${sp}M`
+  return `${Math.round(n / 1e3)}${sp}k`
+}
+function monthName(m) { const i = Number(m.split('-')[1]); return t().months12[i - 1] || m }
+function tier(roi) { return roi === null ? t().tiers[2] : roi < 1 ? t().tiers[0] : roi < 3 ? t().tiers[1] : roi < 10 ? t().tiers[2] : t().tiers[3] }
+
+// Shrinks the font until the text fits the width.
+function fit(text, weight, size, maxWidth, family = SANS) {
+  let s = size
+  do { ctx.font = `${weight} ${s}px ${family}`; s -= 2 } while (ctx.measureText(text).width > maxWidth && s > 12)
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r)
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath()
+}
+
+function draw() {
+  const d = state.data || DEMO
+  const M = 84
+  // background
+  const bg = ctx.createLinearGradient(0, 0, W, H)
+  bg.addColorStop(0, '#0d1117'); bg.addColorStop(1, '#1c1f3d')
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H)
+  const glow = ctx.createRadialGradient(W * 0.85, H * 0.18, 0, W * 0.85, H * 0.18, W * 0.7)
+  glow.addColorStop(0, 'rgba(124, 140, 255, 0.28)'); glow.addColorStop(1, 'rgba(124, 140, 255, 0)')
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H)
+  const glow2 = ctx.createRadialGradient(W * 0.1, H * 0.9, 0, W * 0.1, H * 0.9, W * 0.6)
+  glow2.addColorStop(0, 'rgba(63, 185, 80, 0.2)'); glow2.addColorStop(1, 'rgba(63, 185, 80, 0)')
+  ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H)
+
+  ctx.textBaseline = 'alphabetic'
+  ctx.textAlign = 'left'
+  // header
+  ctx.fillStyle = '#8b949e'; ctx.font = `500 34px ${MONO}`
+  ctx.fillText('Claude Code Wrapped', M, 130)
+  const yg = ctx.createLinearGradient(M, 0, M + 520, 0)
+  yg.addColorStop(0, '#7c8cff'); yg.addColorStop(1, '#3fb950')
+  ctx.fillStyle = yg; ctx.font = `900 190px ${SANS}`
+  ctx.fillText(d.year, M - 8, 320)
+
+  // tokens
+  ctx.fillStyle = '#8b949e'; ctx.font = `600 44px ${SANS}`
+  ctx.fillText(t().youBurned, M, 430)
+  ctx.fillStyle = '#e6edf3'
+  fit(`${tokenCount(d.tokens)} ${t().tokens}`, 900, 128, W - 2 * M)
+  ctx.fillText(`${tokenCount(d.tokens)} ${t().tokens}`, M, 560)
+
+  // cost and ROI
+  ctx.fillStyle = '#ff7b72'
+  fit(t().atApi(usd(d.cost)), 800, 58, W - 2 * M)
+  ctx.fillText(t().atApi(usd(d.cost)), M, 650)
+  let y = 650
+  if (d.roi !== null && d.paid) {
+    const [lead, roi] = t().paid(usd(d.paid), `x${decimal(d.roi, 1)}`)
+    ctx.font = `700 48px ${SANS}`; ctx.fillStyle = '#e6edf3'
+    ctx.fillText(lead, M, 730)
+    const w = ctx.measureText(lead).width
+    ctx.font = `900 48px ${SANS}`; ctx.fillStyle = d.roi >= 1 ? '#3fb950' : '#f85149'
+    ctx.fillText(roi, M + w, 730)
+    y = 730
+  }
+
+  // tier badge
+  const label = tier(d.roi)
+  ctx.font = `800 40px ${SANS}`
+  const bw = Math.min(W - 2 * M, ctx.measureText(label).width + 64)
+  roundRect(M, y + 50, bw, 76, 38)
+  ctx.fillStyle = 'rgba(63, 185, 80, 0.16)'; ctx.fill()
+  ctx.strokeStyle = 'rgba(63, 185, 80, 0.7)'; ctx.lineWidth = 2; ctx.stroke()
+  ctx.fillStyle = '#3fb950'; fit(label, 800, 40, bw - 64)
+  ctx.fillText(label, M + 32, y + 102)
+
+  // stat tiles
+  const tiles = [
+    [t().mainModel, d.top, `${d.topShare}%`],
+    [t().recordMonth, monthName(d.recMonth), usd(d.recCost)],
+    [t().replies, group(d.replies), ''],
+    [t().months, String(d.months), ''],
+  ]
+  const top = y + 170
+  const gap = 20
+  const tw = (W - 2 * M - gap) / 2
+  const th = 150
+  tiles.forEach(([name, value, extra], i) => {
+    const x = M + (i % 2) * (tw + gap)
+    const ty = top + Math.floor(i / 2) * (th + gap)
+    roundRect(x, ty, tw, th, 24)
+    ctx.fillStyle = 'rgba(22, 27, 34, 0.85)'; ctx.fill()
+    ctx.strokeStyle = 'rgba(139, 148, 158, 0.25)'; ctx.lineWidth = 2; ctx.stroke()
+    ctx.fillStyle = '#8b949e'; ctx.font = `600 28px ${SANS}`
+    ctx.fillText(name, x + 28, ty + 48)
+    ctx.fillStyle = '#e6edf3'; fit(value, 800, 56, tw - 56 - (extra ? 120 : 0))
+    ctx.fillText(value, x + 28, ty + 112)
+    if (extra) {
+      ctx.fillStyle = '#3fb950'; ctx.font = `700 34px ${SANS}`; ctx.textAlign = 'right'
+      ctx.fillText(extra, x + tw - 28, ty + 112); ctx.textAlign = 'left'
+    }
+  })
+
+  // footer
+  ctx.fillStyle = '#6e7681'; ctx.font = `500 26px ${MONO}`
+  ctx.fillText('made with token-maxxing', M, H - 56)
+  ctx.textAlign = 'right'
+  ctx.fillText('jck-sabords.github.io/token-maxxing', W - M, H - 56)
+  ctx.textAlign = 'left'
+
+  if (!state.data) {
+    ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-0.4)
+    ctx.font = `900 220px ${SANS}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)'; ctx.fillText(t().demo, 0, 0); ctx.restore()
+  }
+}
+
+function render() {
+  document.documentElement.lang = state.lang
+  el('title').innerHTML = t().title
+  el('subtitle').textContent = t().subtitle
+  el('missing').hidden = !!state.data
+  el('missingText').textContent = t().missing
+  el('download').textContent = t().download
+  el('download').disabled = !state.data
+  el('shareNote').textContent = t().shareNote
+  el('privacy').textContent = t().privacy
+  el('footer').textContent = t().footer
+  document.querySelectorAll('.lang button').forEach((b) => b.classList.toggle('on', b.dataset.lang === state.lang))
+  draw()
+}
+
+el('download').addEventListener('click', () => {
+  canvas.toBlob((blob) => {
+    if (!blob) return
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `claude-code-wrapped-${(state.data || DEMO).year}.png`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  }, 'image/png')
+})
+
+document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('click', () => { state.lang = b.dataset.lang; store('tmx-lang', state.lang); render() }))
+
+const fromLink = new URLSearchParams(location.hash.replace(/^#/, '')).get('lang')
+const saved = recall('tmx-lang')
+const known = (l) => l === 'en' || l === 'fr'
+state.lang = known(fromLink) ? fromLink : known(saved) ? saved : (navigator.language || '').toLowerCase().startsWith('fr') ? 'fr' : 'en'
+state.data = readData(location.hash)
+render()
+</script>
+</body>
+</html>

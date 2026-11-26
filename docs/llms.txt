@@ -22,10 +22,15 @@ It answers questions like "how many tokens do I use in Claude Code?", "how much 
 
 The flex page turns the score into a profile picture frame ("Claude ROI-maxxer ~ x11.3"), drawn in the browser. Free with a small signature, 0.99 EUR in HD without it.
 
+## Claude Code Wrapped
+
+The Wrapped page turns the year's numbers into a shareable 4:5 card: tokens, API-equivalent cost, ROI, main model, record month, replies, and a fun title. Free, drawn in the browser.
+
 ## Links
 
 - Website: https://jck-sabords.github.io/token-maxxing/
 - Source code and README: https://github.com/JCK-Sabords/token-maxxing
 - Flex page: https://jck-sabords.github.io/token-maxxing/flex/
+- Wrapped page: https://jck-sabords.github.io/token-maxxing/wrapped/
 
 token-maxxing is a fan project, not affiliated with Anthropic.

@@ -50,6 +50,7 @@ Somewhere in San Francisco, a CFO just whispered my name with hatred. 😭
 - 🟢 **Your ROI**: green when you're farming, red when you're getting played
 - 📈 **A monthly chart**, because number go up is the only cardio we do
 - 🖼️ **A profile picture frame** with your ROI on it, #OpenToWork style, but for people who actually work
+- 🎁 **Claude Code Wrapped**: your year in tokens as a card to share, Spotify Wrapped style
 - ⚡ **Fast**: only new lines are read, after each Claude reply
 - 🔒 **100% local**: reads your transcripts, keeps a small cache, makes zero network calls (unlike your dignity)
 
@@ -116,6 +117,12 @@ Numbers in a terminal are cute. Numbers on your LinkedIn profile picture are a l
 Your ring says **Claude ROI-maxxer ~ x11.3**. Recruiters will have questions.
 
 Your photo never leaves your browser: the frame is drawn on your machine. The free version signs the end of the ring with a tiny "token-maxxing". In marketing, we call that a feature.
+
+## Claude Code Wrapped 🎁
+
+Your year in Claude Code, in one card made for LinkedIn and Instagram: tokens burned, the API bill you dodged, your main model, your record month, your ROI, and a title you earned (from "Gym membership enjoyer" to "Anthropic CFO's worst nightmare").
+
+Press **Your 2026 Wrapped** in the pane. It opens [the Wrapped page](https://jck-sabords.github.io/token-maxxing/wrapped/) with your year loaded. Free, drawn in your browser.
 
 ## How the math works (for the nerds)
 

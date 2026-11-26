@@ -265,6 +265,7 @@ const TEXT = {
     chartAlt: 'API-equivalent cost per month',
     noClaudeDir: 'could not find the ~/.claude folder',
     flex: 'Flex it on your profile pic ↗',
+    wrapped: (year: string) => `Your ${year} Wrapped ↗`,
   },
   fr: {
     months: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
@@ -292,6 +293,7 @@ const TEXT = {
     chartAlt: 'Coût équivalent API par mois',
     noClaudeDir: 'dossier ~/.claude introuvable',
     flex: 'Afficher sur ta photo de profil ↗',
+    wrapped: (year: string) => `Ton Wrapped ${year} ↗`,
   },
 }
 const t = () => TEXT[lang]
@@ -487,6 +489,47 @@ function flexUrl(view: View, tab: Tab, month: string, subscription: Subscription
   return `${FLEX_URL}#${params.toString()}`
 }
 
+const WRAPPED_URL = 'https://jck-sabords.github.io/token-maxxing/wrapped/'
+
+// The year so far, for the Wrapped card: totals, the model and the month that cost the most.
+function wrappedUrl(cache: Cache, month: string, planPriceUsd: number) {
+  const year = month.slice(0, 4)
+  const byModel = new Map<string, number>()
+  const byMonth = new Map<string, number>()
+  let tokens = 0
+  let cost = 0
+  let replies = 0
+  for (const [key, bucket] of Object.entries(cache.buckets)) {
+    const [bucketMonth, model] = key.split('|')
+    if (!bucketMonth.startsWith(`${year}-`)) continue
+    tokens += bucket.tokens
+    cost += bucket.cost
+    replies += bucket.messages
+    byModel.set(model, (byModel.get(model) ?? 0) + bucket.cost)
+    byMonth.set(bucketMonth, (byMonth.get(bucketMonth) ?? 0) + bucket.cost)
+  }
+  const top = [...byModel.entries()].sort((a, b) => b[1] - a[1])[0]
+  const record = [...byMonth.entries()].sort((a, b) => b[1] - a[1])[0]
+  const months = monthsBetween([...byMonth.keys()].sort()[0] ?? month, month)
+  const paid = planPriceUsd > 0 ? planPriceUsd * months : 0
+  // Same order as the page's FIELDS: the checksum depends on it.
+  const fields = {
+    year,
+    tokens: String(Math.round(tokens)),
+    cost: String(Math.round(cost)),
+    replies: String(replies),
+    roi: paid > 0 ? (cost / paid).toFixed(1) : '',
+    paid: paid > 0 ? String(Math.round(paid)) : '',
+    top: top ? shortModel(top[0]) : '',
+    topShare: top && cost > 0 ? String(Math.round((top[1] / cost) * 100)) : '0',
+    recMonth: record ? record[0] : month,
+    recCost: String(Math.round(record ? record[1] : 0)),
+    months: String(months),
+  }
+  const c = checksum(`${Object.values(fields).join('|')}|token-maxxing-wrapped`)
+  return `${WRAPPED_URL}#${new URLSearchParams({ ...fields, lang, c }).toString()}`
+}
+
 // ----- the pane -----
 
 async function openPane($: EngineInterface, isAsked: boolean) {
@@ -572,6 +615,7 @@ export const register: Register = (on, rawOptions) => {
     const view = viewOf(stats, month, tab)
     const subscription = subscriptionOf(view, tab, month, planPriceUsd)
     const flex = <Link key="flex" href={flexUrl(view, tab, month, subscription)} label={t().flex} />
+    const wrapped = <Link key="wrapped" href={wrappedUrl(stats, month, planPriceUsd)} label={t().wrapped(month.slice(0, 4))} />
     const tabs = (
       <Box key="tabs" flexDirection="row" gap="xs">
         <Button key="tab-month" label={t().thisMonth} variant={tab === 'month' ? 'primary' : 'secondary'} onPress={() => selectTab($, 'month')} />
@@ -585,6 +629,7 @@ export const register: Register = (on, rawOptions) => {
           {tabs}
           <Text>{textReport(view, subscription)}</Text>
           {flex}
+          {wrapped}
           <Text dimColor>{t().localSessions()}, {sinceLastScan(now)}</Text>
         </Box>
       )
@@ -617,7 +662,8 @@ export const register: Register = (on, rawOptions) => {
           </Box>
         )}
 
-        <Box flexDirection="row" justifyContent="flex-end">
+        <Box flexDirection="row" justifyContent="flex-end" gap="md" flexWrap="wrap">
+          {wrapped}
           {flex}
         </Box>
 
