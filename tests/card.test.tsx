@@ -18,9 +18,14 @@ const PANE = {
   props: { title: 'token-maxxing', isFocused: false, bodyColumns: 46, placement: 'dock', scroll: { offset: 0, bodyRows: 40 }, view: {} },
 } as const
 
-// The engine beneath the mod: one project with one transcript, no cache yet.
-function engine(on: any, surfaces: string[]) {
-  on('clock.now', () => ({ value: NOW }))
+// A history the test can change: paths under ~/.claude/projects, each with its text and date.
+type History = Record<string, { text: string; mtimeMs: number }>
+const DAY = 24 * 3600_000
+
+// The engine beneath the mod: one project with one transcript (or a whole history), no cache yet.
+function engine(on: any, surfaces: string[], history?: History, now: () => number = () => NOW) {
+  const calls = { listed: [] as string[], written: 0 }
+  on('clock.now', () => ({ value: now() }))
   on('command.register', () => ({ value: { command: 'tokens' } }))
   on('session.start', (_: unknown, e: { cwd: string }) => ({ cwd: e.cwd }))
   on('session.usage', () => ({ value: { cost: { usd: 0 }, rateLimits: [], context: { window: 200_000 } } }))
@@ -29,6 +34,19 @@ function engine(on: any, surfaces: string[]) {
   on('ui.toast', () => ({ value: undefined }))
   on('fs.list', (_: unknown, e: { path?: string }) => {
     const path = String(e.path).replace(/\\/g, '/')
+    if (history) {
+      const dir = path.slice(path.indexOf('/projects') + '/projects'.length).replace(/^\//, '')
+      calls.listed.push(dir)
+      const prefix = dir ? `${dir}/` : ''
+      const found = new Map<string, unknown>()
+      for (const [file, { text, mtimeMs }] of Object.entries(history)) {
+        if (!file.startsWith(prefix)) continue
+        const [name = '', ...rest] = file.slice(prefix.length).split('/')
+        const size = new TextEncoder().encode(text).length
+        found.set(name, rest.length ? { name, kind: 'dir', size: 0, mtimeMs: 0, isLink: false } : { name, kind: 'file', size, mtimeMs, isLink: false })
+      }
+      return { value: [...found.values()] }
+    }
     if (path.endsWith('/projects')) return { value: [{ name: 'proj', kind: 'dir', size: 0, mtimeMs: 0, isLink: false }] }
     if (path.endsWith('/proj')) return { value: [{ name: 's.jsonl', kind: 'file', size: TRANSCRIPT.length, mtimeMs: 0, isLink: false }] }
     return { value: [] }
@@ -36,13 +54,31 @@ function engine(on: any, surfaces: string[]) {
   on('fs.read', (_: unknown, e: { path: string; offset?: number; length?: number }) => {
     if (e.path.endsWith('cache.json')) return { deny: 'ENOENT' }
     const offset = e.offset ?? 0
+    if (history) {
+      const file = Object.keys(history).find(name => String(e.path).replace(/\\/g, '/').endsWith(`/projects/${name}`))
+      if (!file) return { deny: 'ENOENT' }
+      const bytes = new TextEncoder().encode(history[file]!.text)
+      return { value: new TextDecoder().decode(bytes.slice(offset, e.length === undefined ? undefined : offset + e.length)) }
+    }
     return { value: TRANSCRIPT.slice(offset, e.length === undefined ? undefined : offset + e.length) }
   })
-  on('fs.write', () => ({ value: undefined }))
+  on('fs.write', () => {
+    calls.written += 1
+    return { value: undefined }
+  })
   on('ui.log', () => ({ value: undefined }))
   // Where the mod is not under a .claude folder, it asks the environment.
   on('process.run', () => ({ value: { stdout: '/home/test\n', stderr: '', exitCode: 0 } }))
+  return calls
 }
+
+// One reply of opus-5-5: 100,000 output tokens cost $2.00.
+const reply = (id: string, note = '') =>
+  `${JSON.stringify({ type: 'assistant', requestId: `r-${id}`, timestamp: '2026-11-24T10:00:00Z', message: { id, model: 'claude-opus-5-5', usage: { input_tokens: 0, output_tokens: 100_000 } }, note })}\n`
+
+// /tokens with no pane to draw reads the history, then answers with the totals.
+const total = async ($: any) =>
+  /all time\n\$([\d.,]+)/.exec(((await $.command.run({ command: 'tokens', args: '' } as never)) as { text: string }).text)?.[1]
 
 test('the pane shows this month, then all time, at API prices', { options: { planPriceUsd: 20 } } as never, async ($, on) => {
   engine(on, ['desktop'])
@@ -113,6 +149,60 @@ test('/tokens answers with text where no surface draws a pane', async ($, on) =>
   expect(ran.text).toMatch(/Nov 2026/)
   expect(ran.text).toMatch(/opus-5-5 .*\$2\.20/)
   expect(ran.text).toMatch(/all time\n\$16\.20/)
+})
+
+test('only the sessions that moved are opened again', async ($, on) => {
+  const history: History = {
+    'proj/old.jsonl': { text: reply('m1'), mtimeMs: NOW - 3 * DAY },
+    'proj/old/subagents/agent-1.jsonl': { text: reply('m2'), mtimeMs: NOW - 3 * DAY },
+    'proj/old/tool-results/dump.jsonl': { text: reply('m9'), mtimeMs: NOW - 3 * DAY },
+    'proj/new.jsonl': { text: reply('m3'), mtimeMs: NOW },
+    'proj/new/subagents/agent-2.jsonl': { text: reply('m4'), mtimeMs: NOW },
+  }
+  const calls = engine(on, [], history)
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  // The whole history once: four replies. A tool result is not a transcript.
+  expect(await total($)).toBe('8.00')
+  calls.listed.length = 0
+  history['proj/new/subagents/agent-2.jsonl']!.text += reply('m5')
+  expect(await total($)).toBe('10.00')
+  expect([...new Set(calls.listed)].sort()).toEqual(['', 'proj', 'proj/new', 'proj/new/subagents'])
+  // The old session resumes: its folder is opened again.
+  history['proj/old.jsonl']!.text += reply('m6')
+  history['proj/old/subagents/agent-1.jsonl']!.text += reply('m7')
+  expect(await total($)).toBe('14.00')
+})
+
+test('the cache is saved when something changed, at most every ten minutes', async ($, on) => {
+  const history: History = { 'proj/s.jsonl': { text: reply('m1'), mtimeMs: NOW } }
+  let now = NOW
+  const calls = engine(on, [], history, () => now)
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  await total($)
+  expect(calls.written).toBe(1)
+  now += 11 * 60_000
+  await total($)
+  expect(calls.written).toBe(1)
+  history['proj/s.jsonl']!.text += reply('m2')
+  await total($)
+  expect(calls.written).toBe(2)
+  history['proj/s.jsonl']!.text += reply('m3')
+  now += 60_000
+  await total($)
+  expect(calls.written).toBe(2)
+  now += 10 * 60_000
+  await total($)
+  expect(calls.written).toBe(3)
+})
+
+test('a line still being written is counted once it is whole, whatever characters it holds', async ($, on) => {
+  const second = reply('m2', 'é💡€ still writing')
+  const history: History = { 'proj/s.jsonl': { text: reply('m1', 'é💡€') + second.slice(0, second.indexOf('writing')), mtimeMs: NOW } }
+  engine(on, [], history)
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  expect(await total($)).toBe('2.00')
+  history['proj/s.jsonl']!.text = reply('m1', 'é💡€') + second
+  expect(await total($)).toBe('4.00')
 })
 
 test('the pane also draws in the terminal', async ($, on) => {

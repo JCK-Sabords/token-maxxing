@@ -11,11 +11,11 @@ It answers questions like "how many tokens do I use in Claude Code?", "how much 
 - In Claude Code, in a terminal: `/plugin install token-maxxing --marketplace JCK-Sabords/token-maxxing`, then type `/tokens`.
 - In the Claude desktop app: + next to the prompt, Plugins, Add marketplace `JCK-Sabords/token-maxxing`, then Add plugin.
 - Requires Claude Code v2.1.287 or later (v2.1.286 in the desktop app). Works in the CLI, the desktop app's Code tab and the VS Code extension.
-- To see the ROI, set the plan price per month: `/plugin configure token-maxxing@token-maxxing` (option `planPriceUsd`). Option `language`: `en` or `fr`.
+- To see the ROI, set the plan price per month: `/plugin configure token-maxxing@token-maxxing` (option `planPriceUsd`). The pane speaks 7 languages, picked at its bottom.
 
 ## How it computes
 
-- Source: Claude Code's local transcripts (`~/.claude/projects/**/*.jsonl`). Cloud sessions and claude.ai chats are not counted.
+- Source: Claude Code's local transcripts, the sessions' and their subagents' (`~/.claude/projects/`). Cloud sessions and claude.ai chats are not counted.
 - Each reply is counted once, with its final output token count.
 - Prices: Anthropic's public API rates (November 2026), cache writes at 1.25x input (5 minutes) or 2x (1 hour), cache reads at each model's rate, fast mode at 2x.
 - 100% local: it reads the transcripts, writes a small cache (~/.claude/token-maxxing/cache.json) that keeps the all-time total, may run printenv to find the home folder, and makes no network calls.

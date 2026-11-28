@@ -56,10 +56,17 @@ type Cache = {
 }
 
 const CHUNK = 4 * 1024 * 1024
+const DAY = 24 * 3600 * 1000
+// The cache only spares the next session the full read: saving it now and then is enough.
+const SAVE_MS = 10 * 60 * 1000
+// What a read shows for a character cut at its edge.
+const CUT = String.fromCharCode(0xfffd)
 let stats: Cache | undefined
 let scanning: Promise<void> | undefined
 let lastError: string | undefined
 let lastScanAt = 0
+let isUnsaved = false
+let savedAt = 0
 
 const emptyCache = (): Cache => ({ version: 1, offsets: {}, seen: {}, buckets: {} })
 
@@ -137,6 +144,17 @@ function addLine(cache: Cache, line: string) {
   cache.seen[key] = [bucketKey, output, perOutput]
 }
 
+// The lines that speak of usage, found without cutting the whole text into lines.
+function* usageLines(text: string) {
+  let at = text.indexOf('"usage"')
+  while (at >= 0) {
+    const newline = text.indexOf('\n', at)
+    const end = newline < 0 ? text.length : newline
+    yield text.slice(text.lastIndexOf('\n', at) + 1, end)
+    at = text.indexOf('"usage"', end)
+  }
+}
+
 // Reads what was appended to one transcript since the last scan.
 async function readFile($: EngineInterface, cache: Cache, path: string, size: number) {
   let offset = cache.offsets[path] ?? 0
@@ -153,25 +171,44 @@ async function readFile($: EngineInterface, cache: Cache, path: string, size: nu
       isSkipping = true
       continue
     }
-    let body = text.slice(0, end)
-    if (isSkipping) {
-      const first = body.indexOf('\n')
-      body = first < 0 ? '' : body.slice(first + 1)
-      isSkipping = false
-    }
-    for (const line of body.split('\n')) addLine(cache, line)
-    offset += utf8Length(text.slice(0, end + 1))
+    const start = isSkipping ? text.indexOf('\n') + 1 : 0
+    isSkipping = false
+    for (const line of usageLines(text.slice(start, end))) addLine(cache, line)
+    // The next read starts after the last whole line. Only what follows it is measured, the rest
+    // is the length asked for; unless a character is cut there, then everything before is measured.
+    const tail = text.slice(end + 1)
+    offset += tail.includes(CUT) ? utf8Length(text.slice(0, end + 1)) : length - utf8Length(tail)
   }
   cache.offsets[path] = offset
 }
 
-async function transcripts($: EngineInterface, dir: string, depth: number, found: { path: string; size: number }[]) {
-  const entries = await $.fs.list(dir).catch(() => [])
-  for (const entry of entries) {
-    const path = `${dir}/${entry.name}`
-    if (entry.kind === 'file' && entry.name.endsWith('.jsonl')) found.push({ path, size: entry.size })
-    else if (entry.kind === 'dir' && depth > 0) await transcripts($, path, depth - 1, found)
+// Transcripts live in <projects>/<project>/<session>.jsonl and in <session>/subagents/.
+// A session folder is only opened if its transcript moved, or is less than a day old:
+// subagents only write while their session does.
+async function transcripts($: EngineInterface, projects: string, now: number, offsets: Cache['offsets']) {
+  const found: { path: string; size: number }[] = []
+  // Lists a folder, keeping the transcripts it holds.
+  const open = async (dir: string) => {
+    const entries = await $.fs.list(dir).catch(() => [])
+    for (const entry of entries) {
+      if (entry.kind === 'file' && entry.name.endsWith('.jsonl')) found.push({ path: `${dir}/${entry.name}`, size: entry.size })
+    }
+    return entries
   }
+  for (const project of await open(projects)) {
+    if (project.kind !== 'dir') continue
+    const dir = `${projects}/${project.name}`
+    const entries = await open(dir)
+    const files = new Map(entries.map(entry => [entry.name, entry]))
+    for (const folder of entries) {
+      if (folder.kind !== 'dir') continue
+      const main = files.get(`${folder.name}.jsonl`)
+      if (main && offsets[`${dir}/${main.name}`] === main.size && now - main.mtimeMs > DAY) continue
+      const inside = await open(`${dir}/${folder.name}`)
+      if (inside.some(entry => entry.name === 'subagents')) await open(`${dir}/${folder.name}/subagents`)
+    }
+  }
+  return found
 }
 
 // The Claude Code config folder: from where the mod is installed, else from the environment
@@ -206,16 +243,22 @@ async function scan($: EngineInterface) {
       stats = emptyCache()
     }
   }
-  const files: { path: string; size: number }[] = []
-  await transcripts($, `${claudeDir}/projects`, 3, files)
+  const now = await $.clock.now()
+  const files = await transcripts($, `${claudeDir}/projects`, now, stats.offsets)
   for (const { path, size } of files) {
-    if ((stats.offsets[path] ?? 0) === size) continue
+    const before = stats.offsets[path] ?? 0
+    if (before === size) continue
     await readFile($, stats, path, size).catch(error => {
       $.ui.log(`token-maxxing: ${path}: ${error}`, { to: 'debug' })
     })
+    if ((stats.offsets[path] ?? 0) !== before) isUnsaved = true
   }
   // Transcripts Claude Code deletes later stay counted here: the cache is the history.
-  await $.fs.write(cachePath, JSON.stringify(stats))
+  if (isUnsaved && now - savedAt >= SAVE_MS) {
+    await $.fs.write(cachePath, JSON.stringify(stats))
+    isUnsaved = false
+    savedAt = now
+  }
   lastScanAt = await $.clock.now()
   lastError = undefined
 }

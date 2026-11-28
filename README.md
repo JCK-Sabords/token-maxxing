@@ -58,7 +58,7 @@ Somewhere in San Francisco, a CFO just whispered my name with hatred. 😭
 - 📈 **A monthly chart**, because number go up is the only cardio we do
 - 🖼️ **A profile picture frame** with your ROI on it, #OpenToWork style, but for people who actually work
 - 🎁 **Claude Code Wrapped**: your year in tokens as a card to share, Spotify Wrapped style
-- ⚡ **Fast**: only new lines are read, after each Claude reply
+- ⚡ **Light**: only new lines are read after each Claude reply, idle session folders stay closed, and the cache is saved at most every 10 minutes. Your tokens burn, your CPU doesn't.
 - 🔒 **100% local**: reads your transcripts, keeps a small cache, makes zero network calls (unlike your dignity)
 
 Works in the Claude Code CLI, the desktop app and VS Code.
@@ -134,7 +134,7 @@ Press **Your 2026 Wrapped** in the pane. It opens [the Wrapped page](https://jck
 
 ## How the math works (for the nerds)
 
-- **Source**: Claude Code's local transcripts (`~/.claude/projects/**/*.jsonl`). Cloud sessions and claude.ai chats leave nothing on your disk, so they don't count. Sorry, your best work happened off the books.
+- **Source**: Claude Code's local transcripts, your sessions' and their subagents' (`~/.claude/projects/`). Cloud sessions and claude.ai chats leave nothing on your disk, so they don't count. Sorry, your best work happened off the books.
 - **One reply, counted once**: transcripts write several lines per reply, a partial output count first and the final one last. The mod keeps the final one.
 - **Prices**: Anthropic's public API rates (November 2026). Cache writes at 1.25x input (5 min) or 2x (1 h), cache reads at each model's own rate, fast mode at 2x. It's all in `PRICES` in `hooks/register.tsx`.
 - **Incremental**: a cache in `~/.claude/token-maxxing/cache.json` remembers what was already read, and keeps your all-time total even after Claude Code deletes old transcripts. Your sins are remembered.
